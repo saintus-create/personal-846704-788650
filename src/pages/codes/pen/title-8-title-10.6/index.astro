@@ -1,0 +1,8 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { readFileSync } from 'node:fs';
+const html = readFileSync('src/pages/codes/pen/title-8-title-10.6/body.html', 'utf-8');
+---
+<StarlightPage frontmatter={{ title: "Title 8–10.6", description: "California Penal Code, Title 8–10.6 — full statutory text. Dated research snapshot." }}>
+  <Fragment set:html={html} />
+</StarlightPage>

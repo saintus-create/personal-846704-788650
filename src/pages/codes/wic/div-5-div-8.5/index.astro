@@ -1,0 +1,8 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { readFileSync } from 'node:fs';
+const html = readFileSync('src/pages/codes/wic/div-5-div-8.5/body.html', 'utf-8');
+---
+<StarlightPage frontmatter={{ title: "Division 5–8.5", description: "California Welfare and Institutions Code, Division 5–8.5 — full statutory text. Dated research snapshot." }}>
+  <Fragment set:html={html} />
+</StarlightPage>

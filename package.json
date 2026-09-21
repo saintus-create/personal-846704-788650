@@ -1,0 +1,14 @@
+{
+  "name": "ca-leg-info",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "generate": "python3 scripts/generate.py"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.35.3",
+    "astro": "^5.18.2"
+  }
+}

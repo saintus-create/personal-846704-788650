@@ -1,0 +1,28 @@
+---
+title: "Ask AI"
+description: "AI-assisted research over the California Codes corpus — powered by Sarvam AI, OpenRouter, or Mistral."
+---
+import AskAI from '../../components/AskAI.astro';
+
+Ask research questions about California law. Your question is first matched against
+the full text of the codes on this site, and the most relevant retrieved sections are
+passed to your chosen model as evidence — with citations back to the pages they came from.
+
+## Bring your own key
+
+Pick a provider, paste its API key, and ask away. The key is stored only in your
+browser (localStorage) and requests go directly from your browser to the provider:
+
+- **OpenRouter** (recommended — one key, hundreds of models, browser-friendly) —
+  get a key at [openrouter.ai/keys](https://openrouter.ai/keys)
+- **Sarvam AI** — get a key at [dashboard.sarvam.ai](https://dashboard.sarvam.ai)
+  (model defaults to `sarvam-m`; other Sarvam models can be typed in)
+- **Mistral AI** — get a key at [console.mistral.ai](https://console.mistral.ai)
+
+:::caution[AI answers are not legal advice]
+AI-generated research assistance may contain mistakes. Verify provisions, effective
+dates, and applicability against the [official California Legislative Information](https://leginfo.legislature.ca.gov/)
+before relying on them, and consult a qualified attorney for specific legal matters.
+:::
+
+<AskAI />

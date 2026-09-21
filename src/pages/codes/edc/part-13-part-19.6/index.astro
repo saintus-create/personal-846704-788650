@@ -1,0 +1,8 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { readFileSync } from 'node:fs';
+const html = readFileSync('src/pages/codes/edc/part-13-part-19.6/body.html', 'utf-8');
+---
+<StarlightPage frontmatter={{ title: "Title 1. GENERAL EDUCATION CODE PROVISIONS — Division 1. GENERAL EDUCATION CODE PROVISIONS — Part 13–19.6", description: "California Education Code, Title 1. GENERAL EDUCATION CODE PROVISIONS — Division 1. GENERAL EDUCATION CODE PROVISIONS — Part 13–19.6 — full statutory text. Dated research snapshot." }}>
+  <Fragment set:html={html} />
+</StarlightPage>

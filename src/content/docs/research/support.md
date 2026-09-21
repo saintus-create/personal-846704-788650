@@ -1,0 +1,19 @@
+---
+title: Support
+description: Report an issue or suggest an improvement to CA Leg Info.
+---
+
+CA Leg Info is an information and navigation resource for California legal materials. If you find a broken link, outdated description, or accessibility issue, open an issue in the project's GitHub repository with the page URL and a concise description.
+
+## Before reporting an issue
+
+- Include the page title and URL.
+- Describe what you expected to find and what happened instead.
+- Include the source URL when reporting a legal-content discrepancy.
+- Do not include confidential, privileged, or personally identifying information.
+
+:::note
+This project cannot provide legal advice or assess an individual matter. For help with a specific legal issue, consult a qualified California attorney or an appropriate court self-help resource.
+:::
+
+Useful official starting points include the [California Legislative Information portal](https://leginfo.legislature.ca.gov/), [California Courts](https://www.courts.ca.gov/), and [California Courts self-help](https://selfhelp.courts.ca.gov/).

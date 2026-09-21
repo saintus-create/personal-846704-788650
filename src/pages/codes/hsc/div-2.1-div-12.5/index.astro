@@ -1,0 +1,8 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { readFileSync } from 'node:fs';
+const html = readFileSync('src/pages/codes/hsc/div-2.1-div-12.5/body.html', 'utf-8');
+---
+<StarlightPage frontmatter={{ title: "Division 2.1–12.5", description: "California Health and Safety Code, Division 2.1–12.5 — full statutory text. Dated research snapshot." }}>
+  <Fragment set:html={html} />
+</StarlightPage>

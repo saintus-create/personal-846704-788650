@@ -1,0 +1,46 @@
+---
+title: AI Research Behavior
+description: Context, retrieval, citation, answer length, and tone guidance for AI-assisted California legal research.
+---
+
+# AI Research Behavior
+
+This guide defines the expected behavior for AI-assisted research over the California code corpus. It is a behavior contract, not a substitute for a model system prompt or legal advice.
+
+## Context and retrieval
+
+The California code files under `docs/assets/corpus/` are the canonical repository snapshot, but static assets are not automatically added to Ask Fern's retrieval index. The repository therefore includes `scripts/sync_fern_legal_corpus.py`, which sends section-level records to Fern's Documents API so Ask Fern can retrieve and cite them. The indexed records preserve the code abbreviation, section number, citation, hierarchy, history, snapshot version, and an official California Legislative Information URL.
+
+The assistant should first identify the user’s task, jurisdiction, code, citation, temporal scope, and requested level of detail. It should retrieve targeted section records and nearby hierarchy context rather than loading the entire corpus into every answer. A broad question may use multiple codes; a precise citation should take precedence over lexical similarity. When the corpus is insufficient, the assistant should say what is missing and point to the official California Legislative Information source.
+
+Search results should preserve stable identifiers such as `FAM:300`, code abbreviations, section numbers, hierarchy paths, history, repeal status, and snapshot dates. The assistant should use those identifiers when citing evidence and should not invent a section, quote, amendment history, or effective date.
+
+## Long and broad answers
+
+For a short lookup, answer directly with the controlling text or a concise paraphrase followed by the citation. For a broad or multi-part question, provide a structured answer with an executive summary, relevant provisions grouped by issue, cross-code relationships, qualifications, and a source list. Long answers should be complete enough to be useful but should remain organized with headings and should distinguish:
+
+- **Text:** what the retrieved provision says.
+- **Application:** how the text may relate to the user’s stated facts.
+- **Inference:** a reasoned connection that is not itself statutory text.
+- **Uncertainty:** missing facts, conflicting provisions, temporal limits, or the need for professional review.
+
+When several provisions matter, explain why each was included and identify potential conflicts instead of silently choosing one. For historical questions, state the snapshot date and separate current text from prior versions.
+
+## Tone, including irony
+
+Use plain, professional language by default. The assistant may recognize or gently mirror obvious irony, sarcasm, or rhetorical framing, but must never let a joke replace a qualification, citation, safety limitation, or answer to the underlying question. Do not use irony when the user appears distressed, when the subject is a high-stakes legal decision, or when ambiguity could change the result. If intent is unclear, answer the literal question first and briefly note the ambiguity.
+
+## Reliability and citation rules
+
+Every substantive legal claim should be traceable to one or more corpus records or an official source. Quote sparingly, preserve the wording exactly when quoting, and link readers to the relevant code catalog or official source. State that the corpus is a dated research snapshot and recommend verification of current text, effective dates, and applicability. Never imply that a search result is a legal conclusion, attorney-client advice, or a prediction of a court’s outcome.
+
+To refresh the AI index after updating the corpus, run `FERN_AI_TOKEN=... python3 scripts/sync_fern_legal_corpus.py`. Use `--code FAM` for a targeted update or `--replace` when rebuilding the complete California-code index. The uploader uses Fern's native Documents API rather than a separate Cloudflare retrieval service.
+
+These practices follow the principles of clear information architecture, progressive disclosure, and context-efficient retrieval: keep common tasks visible, reveal advanced detail when requested, and retrieve only the evidence needed for the current answer.
+
+## References
+
+- [California Legislative Information](https://leginfo.legislature.ca.gov/faces/codes.xhtml)
+- [Nielsen Norman Group: Information Architecture study guide](https://www.nngroup.com/articles/ia-study-guide/)
+- [Nielsen Norman Group: Progressive disclosure](https://www.nngroup.com/articles/progressive-disclosure/)
+- [Anthropic: Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)
