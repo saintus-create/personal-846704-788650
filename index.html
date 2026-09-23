@@ -171,7 +171,7 @@ const CODE_NAMES = {
   PRC:"Public Resources Code",PUC:"Public Utilities Code",RTC:"Revenue and Taxation Code",SHC:"Streets and Highways Code",
   UIC:"Unemployment Insurance Code",VEH:"Vehicle Code",WAT:"Water Code",WIC:"Welfare and Institutions Code",
 };
-const SYSTEM_PROMPT = 'You are an AI legal research assistant for California law, powered by a large language model with broad knowledge of law and legal concepts.\nRetrieved sections of the California Codes are provided with each question. Treat them as your PRIMARY evidence when relevant: quote and cite them (code and section number) for statutory claims.\nYou are NOT limited to the corpus. Use your legal knowledge to explain concepts, doctrine, procedure, and practical context. When retrieved sections do not address the question, say so plainly, then answer from your general knowledge and label it as such.\nRules: never invent code sections, section numbers, or statutory quotes. Only cite sections actually shown to you. If you rely on memory for a specific statute, say so and suggest verifying at leginfo.legislature.ca.gov. Judicial opinions from California courts may also be provided as evidence. Statutes are primary authority; opinions interpret them - cite cases by name and citation when relying on them, and distinguish statutory text from judicial interpretation. For legislative history beyond the enactment and amendment notes provided, direct the user to leginfo.legislature.ca.gov. For current rulemaking and calls for comment, direct the user to the California Office of Administrative Law (oal.ca.gov). Be direct and practical; structure longer answers. Public legal information, not legal advice. Never predict outcomes.';
+const SYSTEM_PROMPT = 'You are an AI legal research assistant for California law, powered by a large language model with broad knowledge of law and legal concepts.\nRetrieved sections of the California Codes are provided with each question. Treat them as your PRIMARY evidence when relevant: quote and cite them (code and section number) for statutory claims.\nYou are NOT limited to the corpus. Use your legal knowledge to explain concepts, doctrine, procedure, and practical context. When retrieved sections do not address the question, say so plainly, then answer from your general knowledge and label it as such.\nRules: never invent code sections, section numbers, or statutory quotes. Only cite sections actually shown to you. If you rely on memory for a specific statute, say so and suggest verifying at leginfo.legislature.ca.gov. Judicial opinions from California courts may also be provided as evidence. Statutes are primary authority; opinions interpret them - cite cases by name and citation when relying on them, and distinguish statutory text from judicial interpretation. Distinguish binding California authority from persuasive out-of-state authority. For legislative history beyond the enactment and amendment notes provided, direct the user to leginfo.legislature.ca.gov. For current rulemaking and calls for comment, direct the user to the California Office of Administrative Law (oal.ca.gov). Be direct and practical; structure longer answers. Public legal information, not legal advice. Never predict outcomes.';
 
 const $ = (id)=>document.getElementById(id);
 const CODES=[]; const byAbbr={}; const loaded={}; let corpusReady=false, corpusLoading=false;
@@ -352,7 +352,7 @@ async function analyzeSections(q,candidates){
 async function searchCaseLaw(queries){
   var token=localStorage.getItem("ai2.cltoken")||"";
   var out=[],tried=0;
-  for(var i=0;i<queries.length&&out.length<5&&tried<2;i++){
+  for(var i=0;i<queries.length&&out.length<6&&tried<2;i++){
     var q=queries[i]; if(!q||q.length<8) continue;
     tried++;
     try{
@@ -361,7 +361,7 @@ async function searchCaseLaw(queries){
       if(!resp.ok){ if(resp.status===429) break; continue; }
       var data=await resp.json();
       var results=(data&&data.results)||[];
-      for(var j=0;j<results.length&&out.length<5;j++){
+      for(var j=0;j<results.length&&out.length<6;j++){
         var r=results[j], cite="";
         try{ cite=(r.citations&&r.citations[0]&&r.citations[0].cite)||""; }catch(e){}
         var dup=false;
@@ -372,6 +372,27 @@ async function searchCaseLaw(queries){
           url:r.absolute_url?("https://www.courtlistener.com"+r.absolute_url):""});
       }
     }catch(e){ break; }
+  }
+  // nationwide pass: out-of-state persuasive authority (first query)
+  if(out.length<6){
+    try{
+      var url2="https://api.courtlistener.com/v3/search/?q="+encodeURIComponent(queries[0])+"&type=o&stat_Precedential=on";
+      var resp2=await fetch(url2, token?{headers:{Authorization:"Token "+token}}:{});
+      if(resp2.ok){
+        var data2=await resp2.json();
+        var results2=(data2&&data2.results)||[];
+        for(var j2=0;j2<results2.length&&out.length<8;j2++){
+          var r2=results2[j2], cite2="";
+          try{ cite2=(r2.citations&&r2.citations[0]&&r2.citations[0].cite)||""; }catch(e2){}
+          var dup2=false;
+          for(var k2=0;k2<out.length;k2++){ if(out[k2].caseName===r2.caseName) dup2=true; }
+          if(dup2) continue;
+          out.push({caseName:r2.caseName||"Unknown case",cite:cite2,court:(r2.court||"")+(r2.court&&r2.court.indexOf("cal")!==0?" (out-of-state - persuasive only)":""),date:r2.dateFiled||"",
+            snippet:String(r2.snippet||"").replace(/<[^>]+>/g,"").slice(0,700),
+            url:r2.absolute_url?("https://www.courtlistener.com"+r2.absolute_url):""});
+        }
+      }
+    }catch(e3){}
   }
   return out;
 }
