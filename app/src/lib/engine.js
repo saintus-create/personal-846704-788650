@@ -20,7 +20,7 @@ export const SYSTEM_PROMPT =
   "answer yourself.\n" +
   "Use the provided statutes and opinions when they bear on the question and cite them when you do. One hard rule: never fabricate a " +
   "statute, case, or quotation. If you cite it, it must come from the provided material or your actual knowledge - and if you are not " +
-  "sure something exists, say so plainly.";
+  "sure something exists, say so plainly. Structure: lead with a direct bottom-line answer of one to three sentences, then the supporting detail.";
 
 export const CODE_NAMES = {
   CONS: "California Constitution", BPC: "Business and Professions Code", CIV: "Civil Code", CCP: "Code of Civil Procedure",

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ArrowUp, Scale, Loader2, ExternalLink, Copy, Check, Download, RefreshCw, Zap } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -200,29 +201,42 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
       <div className="flex-1 overflow-y-auto px-4 pt-6" ref={scrollBox}>
         <div className="max-w-3xl mx-auto flex flex-col gap-5">
           {messages.length === 0 && (
-            <div className="pt-10 pb-4 text-center">
-              <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl border bg-card mb-4">
-                <Scale className="h-7 w-7 brand-color" />
+            <div className="pt-6 sm:pt-12 pb-4">
+              <div className="relative overflow-hidden rounded-3xl border bg-card/40 px-6 py-12 sm:py-16 text-center">
+                <div className="absolute inset-0 bg-grid" />
+                <div className="glow-orb h-64 w-64 bg-blue-500 -top-24 -left-16" />
+                <div className="glow-orb h-72 w-72 bg-violet-500 -bottom-32 -right-10" style={{ animationDelay: "-6s" }} />
+                <div className="relative">
+                  <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl border bg-card shadow-sm mb-5">
+                    <Scale className="h-7 w-7 brand-color" />
+                  </div>
+                  <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
+                    California law, <span className="text-gradient">answered.</span>
+                  </h1>
+                  <p className="text-muted-foreground text-sm mt-3 max-w-md mx-auto">
+                    The complete California Codes (162,324 sections) plus retrieved judicial opinions, reasoned through and cited.
+                    Ask anything - or start here:
+                  </p>
+                </div>
               </div>
-              <h1 className="text-2xl font-bold">California law, answered.</h1>
-              <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-                The complete California Codes (162,324 sections) plus retrieved judicial opinions, reasoned through and cited.
-                Ask anything - or start here:
-              </p>
               <div className="grid sm:grid-cols-2 gap-3 mt-6 text-left">
                 {EXAMPLES.map((ex, i) => (
-                  <Card key={i} className="p-4 cursor-pointer hover:bg-accent/50 transition-colors" onClick={() => askText(ex)}>
-                    <div className="text-sm">{ex}</div>
-                    <div className="text-xs text-muted-foreground mt-1">{
-                      ["Criminal law", "Civil procedure", "Tenant rights", "Employment", "Criminal defense", "Privacy"][i]
-                    }</div>
-                  </Card>
+                  <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 + i * 0.06, duration: 0.35, ease: "easeOut" }}>
+                    <Card className="p-4 cursor-pointer card-lift bg-card/60" onClick={() => askText(ex)}>
+                      <div className="text-sm">{ex}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{
+                        ["Criminal law", "Civil procedure", "Tenant rights", "Employment", "Criminal defense", "Privacy"][i]
+                      }</div>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
             </div>
           )}
           {messages.map((m, i) => (
-            <div key={i} className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""}`}>
+            <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: "easeOut" }}
+              className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""}`}>
               {m.role === "ai" && (
                 <Avatar className="h-8 w-8 mt-1 border">
                   <AvatarFallback className="bg-primary text-primary-foreground"><Scale className="h-4 w-4" /></AvatarFallback>
@@ -279,14 +293,17 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
                   </div>
                 )}
               </div>
-            </div>
+            </motion.div>
           ))}
-          {status && (
-            <div className="flex items-center gap-2 text-muted-foreground text-sm pl-11">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {status}
-            </div>
-          )}
+          <AnimatePresence>
+            {status && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="flex items-center gap-2 text-muted-foreground text-sm pl-11">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {status}
+              </motion.div>
+            )}
+          </AnimatePresence>
           <div ref={logEnd} />
         </div>
       </div>

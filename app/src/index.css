@@ -21,13 +21,14 @@
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 240 5.9% 10%;
-    --radius: 0.5rem;
+    --radius: 0.625rem;
     --brand: 221 83% 53%;
+    --brand-2: 262 83% 58%;
   }
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 5.9%;
+    --card: 240 6% 6%;
     --card-foreground: 0 0% 98%;
     --primary: 0 0% 98%;
     --primary-foreground: 240 5.9% 10%;
@@ -47,6 +48,60 @@
 
 @layer base {
   * { @apply border-border; }
-  body { @apply bg-background text-foreground; font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter Variable", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  ::selection { background: hsl(var(--brand) / 0.22); }
+  *::-webkit-scrollbar { width: 8px; height: 8px; }
+  *::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 9999px; }
+  *::-webkit-scrollbar-track { background: transparent; }
 }
-.brand-color { color: hsl(var(--brand)); }
+
+@layer utilities {
+  .brand-color { color: hsl(var(--brand)); }
+
+  /* gradient text (hero headline, logo accent) */
+  .text-gradient {
+    background: linear-gradient(135deg, hsl(var(--brand)) 0%, hsl(var(--brand-2)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* subtle grid backdrop */
+  .bg-grid {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.6) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.6) 1px, transparent 1px);
+    background-size: 36px 36px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 35%, black 30%, transparent 75%);
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 35%, black 30%, transparent 75%);
+  }
+
+  /* floating glow orbs for the hero */
+  .glow-orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.35;
+    pointer-events: none;
+    animation: float 12s ease-in-out infinite alternate;
+  }
+  .dark .glow-orb { opacity: 0.28; }
+
+  @keyframes float {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(30px, -24px) scale(1.12); }
+  }
+
+  /* soft card hover lift used on example cards */
+  .card-lift { transition: transform 200ms cubic-bezier(0.2, 0, 0, 1), border-color 200ms, box-shadow 200ms; }
+  .card-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px hsl(var(--brand) / 0.10);
+    border-color: hsl(var(--brand) / 0.35);
+  }
+}
