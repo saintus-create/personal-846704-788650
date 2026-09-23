@@ -202,20 +202,18 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
         <div className="max-w-3xl mx-auto flex flex-col gap-5">
           {messages.length === 0 && (
             <div className="pt-6 sm:pt-12 pb-4">
-              <div className="relative overflow-hidden rounded-3xl border bg-card/40 px-6 py-12 sm:py-16 text-center">
+              <div className="relative overflow-hidden rounded-3xl border bg-card/40 px-6 py-14 sm:py-20 text-center">
                 <div className="absolute inset-0 bg-grid" />
-                <div className="glow-orb h-64 w-64 bg-blue-500 -top-24 -left-16" />
-                <div className="glow-orb h-72 w-72 bg-violet-500 -bottom-32 -right-10" style={{ animationDelay: "-6s" }} />
                 <div className="relative">
-                  <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl border bg-card shadow-sm mb-5">
-                    <Scale className="h-7 w-7 brand-color" />
+                  <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl border bg-card mb-6">
+                    <Scale className="h-5 w-5 brand-color" />
                   </div>
-                  <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-                    California law, <span className="text-gradient">answered.</span>
+                  <h1 className="text-3xl sm:text-[2.75rem] font-semibold tracking-tight leading-tight">
+                    California law, <span className="brand-color">answered.</span>
                   </h1>
-                  <p className="text-muted-foreground text-sm mt-3 max-w-md mx-auto">
-                    The complete California Codes (162,324 sections) plus retrieved judicial opinions, reasoned through and cited.
-                    Ask anything - or start here:
+                  <p className="text-muted-foreground text-[15px] mt-4 max-w-md mx-auto leading-relaxed">
+                    The complete California Codes (162,324 sections) plus retrieved judicial opinions,
+                    reasoned through and cited. Ask anything, or start here:
                   </p>
                 </div>
               </div>
@@ -223,7 +221,7 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
                 {EXAMPLES.map((ex, i) => (
                   <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 + i * 0.06, duration: 0.35, ease: "easeOut" }}>
-                    <Card className="p-4 cursor-pointer card-lift bg-card/60" onClick={() => askText(ex)}>
+                    <Card className="p-4 cursor-pointer card-lift bg-transparent" onClick={() => askText(ex)}>
                       <div className="text-sm">{ex}</div>
                       <div className="text-xs text-muted-foreground mt-1">{
                         ["Criminal law", "Civil procedure", "Tenant rights", "Employment", "Criminal defense", "Privacy"][i]
