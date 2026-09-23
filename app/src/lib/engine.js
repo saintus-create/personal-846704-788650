@@ -239,3 +239,50 @@ export function buildUnits(abbr) {
   for (const r of recs) { if (r.kind === "section") { const u = byPath[r.path || ""]; if (u) u.secs.push(r); } }
   return units;
 }
+
+/* ---------- streaming ---------- */
+export async function llmStream(messages, maxTokens, onDelta) {
+  const p = getProvider();
+  const key = store.key(store.provider);
+  if (p.needsKey && !key) throw new Error("NOKEY:" + p.label);
+  const resp = await fetch(p.url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...p.header(key) },
+    body: JSON.stringify({ model: getModel(), messages, max_tokens: maxTokens, stream: true }),
+  });
+  if (!resp.ok || !resp.body) throw new Error("HTTP " + resp.status);
+  const reader = resp.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "", full = "";
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split("\n");
+    buf = lines.pop();
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t.startsWith("data:")) continue;
+      const d = t.slice(5).trim();
+      if (d === "[DONE]") continue;
+      try {
+        const j = JSON.parse(d);
+        const c = j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content;
+        if (c) { full += c; onDelta(c); }
+      } catch (e) {}
+    }
+  }
+  if (!full) throw new Error("EMPTYSTREAM");
+  return full;
+}
+
+/* ---------- follow-up suggestions ---------- */
+export async function suggestFollowUps(q, answer) {
+  try {
+    const out = await llm([{ role: "user", content:
+      "Given this exchange about California law, suggest exactly 3 short follow-up research questions a lawyer would ask next (max 12 words each). Return ONLY a JSON array of 3 strings, no prose.\n\nQuestion: " + q + "\n\nAnswer: " + String(answer).slice(0, 1500) }], 200);
+    const arr = parseJsonBlock(out);
+    if (Array.isArray(arr)) return arr.map(String).filter((s) => s.length > 3 && s.length < 160).slice(0, 3);
+  } catch (e) {}
+  return [];
+}

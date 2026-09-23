@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Scale, Settings, Sun, Moon } from "lucide-react";
+import React, { useEffect, useState, useCallback } from "react";
+import { Scale, Settings, Sun, Moon, Plus, MessageSquare, Trash2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,20 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import Chat from "@/components/Chat";
 import Browser from "@/components/Browser";
 import { codes, byAbbr, loadCorpus, corpusReady, PROVIDERS, store, getModel } from "@/lib/engine";
+
+const CHATS_KEY = "ai2.chats";
+
+function loadChats() {
+  try {
+    const d = JSON.parse(localStorage.getItem(CHATS_KEY) || "{}");
+    if (Array.isArray(d.chats)) return { chats: d.chats.slice(0, 30), activeId: d.activeId || null };
+  } catch (e) {}
+  return { chats: [], activeId: null };
+}
 
 export default function App() {
   const [tab, setTab] = useState("ai");
@@ -20,16 +31,20 @@ export default function App() {
   const [activeCode, setActiveCode] = useState(null);
   const [jumpSection, setJumpSection] = useState(null);
   const [corpusStatus, setCorpusStatus] = useState("Loading the California Codes…");
+  const [{ chats, activeId }, setChatState] = useState(loadChats);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
     const isDark = saved === "dark" || (!saved && matchMedia("(prefers-color-scheme: dark)").matches);
     setDark(isDark);
     document.documentElement.classList.toggle("dark", isDark);
-    loadCorpus(setCorpusStatus).then((ok) => {
-      setCorpusStatus(ok ? "ready" : "error");
-    }).catch(() => setCorpusStatus("error"));
+    loadCorpus(setCorpusStatus).then((ok) => setCorpusStatus(ok ? "ready" : "error")).catch(() => setCorpusStatus("error"));
   }, []);
+
+  useEffect(() => {
+    try { localStorage.setItem(CHATS_KEY, JSON.stringify({ chats: chats.slice(0, 30), activeId })); } catch (e) {}
+  }, [chats, activeId]);
 
   const toggleTheme = () => {
     const next = !dark;
@@ -38,13 +53,33 @@ export default function App() {
     localStorage.setItem("theme", next ? "dark" : "light");
   };
 
+  const newChat = useCallback(() => {
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    setChatState((s) => ({ chats: [{ id, title: "New chat", ts: Date.now(), msgs: [] }, ...s.chats].slice(0, 30), activeId: id }));
+    return id;
+  }, []);
+
+  const selectChat = (id) => { setChatState((s) => ({ ...s, activeId: id })); setTab("ai"); };
+  const deleteChat = (e, id) => {
+    e.stopPropagation();
+    setChatState((s) => ({ chats: s.chats.filter((c) => c.id !== id), activeId: s.activeId === id ? null : s.activeId }));
+  };
+  const updateChat = useCallback((id, msgs) => {
+    setChatState((s) => ({
+      ...s,
+      chats: s.chats.map((c) => c.id !== id ? c : {
+        ...c, msgs,
+        title: (msgs.find((m) => m.role === "user") || {}).content?.slice(0, 48) || c.title,
+      }),
+    }));
+  }, []);
+
   const jump = (abbr, section) => {
     setActiveCode(abbr);
     setJumpSection(section);
     setTab("codes");
   };
 
-  // settings form state (seeded when dialog opens)
   const [sProvider, setSProvider] = useState(engine);
   const [sModel, setSModel] = useState(getModel());
   const [sKey, setSKey] = useState("");
@@ -66,31 +101,38 @@ export default function App() {
     setSettingsOpen(false);
   };
 
+  const activeChat = chats.find((c) => c.id === activeId) || null;
+
   return (
     <div className="h-screen flex flex-col">
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 sticky top-0 z-40">
-        <div className="flex items-center gap-3 px-4 h-14">
-          <div className="flex items-center gap-2 font-bold cursor-pointer select-none" onClick={() => setTab("ai")}>
+        <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-14">
+          <div className="flex items-center gap-2 font-bold cursor-pointer select-none shrink-0" onClick={() => setTab("ai")}>
             <Scale className="h-5 w-5 brand-color" />
-            <span>CA <span className="brand-color">Leg Info</span></span>
+            <span className="hidden sm:inline">CA <span className="brand-color">Leg Info</span></span>
           </div>
-          <Tabs value={tab} onValueChange={setTab} className="ml-2">
+          <Tabs value={tab} onValueChange={setTab} className="ml-1">
             <TabsList>
               <TabsTrigger value="ai">Ask AI</TabsTrigger>
               <TabsTrigger value="codes">Browse Codes</TabsTrigger>
             </TabsList>
           </Tabs>
           <div className="flex-1" />
-          <div className="hidden sm:block">
-            {tab === "ai" && (
-              <Badge variant="outline" className="font-normal text-muted-foreground">
-                {corpusStatus === "ready" ? "✓ 162,324 sections loaded" :
+          {tab === "ai" && (
+            <div className="hidden sm:block">
+              <Badge variant="outline" className="font-normal text-muted-foreground max-w-[240px] truncate">
+                {corpusStatus === "ready" ? "\u2713 162,324 sections loaded" :
                  corpusStatus === "error" ? "corpus unavailable" : corpusStatus}
               </Badge>
-            )}
-          </div>
+            </div>
+          )}
+          {tab === "ai" && (
+            <Button variant="outline" size="icon" onClick={() => { newChat(); }} title="New chat" className="h-8 w-8">
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
           <Select value={engine} onValueChange={(v) => { store.provider = v; setEngine(v); if (PROVIDERS[v].needsKey && !store.key(v)) openSettings(); }}>
-            <SelectTrigger className="w-[150px] h-8 text-xs">
+            <SelectTrigger className="w-[130px] sm:w-[150px] h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -106,7 +148,37 @@ export default function App() {
 
       <div className="flex-1 overflow-hidden">
         {tab === "ai" ? (
-          <Chat onJump={jump} onCorpusStatus={setCorpusStatus} />
+          <div className="flex h-full">
+            <div className="hidden lg:flex flex-col w-60 border-r shrink-0">
+              <div className="p-3">
+                <Button onClick={() => { newChat(); }} variant="outline" className="w-full justify-start gap-2" disabled={busy}>
+                  <Plus className="h-4 w-4" /> New chat
+                </Button>
+              </div>
+              <ScrollArea className="flex-1 px-3 pb-3">
+                <div className="text-[11px] uppercase tracking-wider text-muted-foreground px-2 pb-2">History</div>
+                <div className="flex flex-col gap-0.5">
+                  {chats.length === 0 && (
+                    <div className="text-xs text-muted-foreground px-2 py-4">No conversations yet. Your chats are saved in this browser.</div>
+                  )}
+                  {chats.map((c) => (
+                    <button key={c.id} onClick={() => selectChat(c.id)} disabled={busy}
+                      className={"group w-full flex items-center gap-2 rounded-md px-2 py-2 text-left text-[13px] transition-colors disabled:opacity-50 " +
+                        (c.id === activeId ? "bg-accent text-accent-foreground font-medium" : "hover:bg-accent/50")}>
+                      <MessageSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{c.title}</span>
+                      <Trash2 className="h-3.5 w-3.5 shrink-0 opacity-0 group-hover:opacity-100 hover:text-destructive"
+                        onClick={(e) => deleteChat(e, c.id)} />
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <Chat key="chat" activeChat={activeChat} onUpdateChat={updateChat} onNewChat={newChat}
+                onJump={jump} onCorpusStatus={setCorpusStatus} onBusyChange={setBusy} />
+            </div>
+          </div>
         ) : (
           <div className="flex h-full">
             <div className="hidden md:block w-64 border-r shrink-0">
@@ -123,7 +195,8 @@ export default function App() {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <Browser activeCode={activeCode} jumpSection={jumpSection} />
+              <Browser activeCode={activeCode} jumpSection={jumpSection}
+                onCodeChange={(a) => { setActiveCode(a); setJumpSection(null); }} />
             </div>
           </div>
         )}
