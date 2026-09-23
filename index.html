@@ -278,49 +278,116 @@ function addStatus(text){
   d.setText=(t)=>{tx.textContent=t;}; return d;
 }
 
+function parseJsonBlock(txt){
+  var m=String(txt).match(/\{[\s\S]*\}/); if(m){ try{ return JSON.parse(m[0]); }catch(e){} }
+  m=String(txt).match(/\[[\s\S]*\]/); if(m){ try{ return JSON.parse(m[0]); }catch(e){} }
+  return null;
+}
+async function planQuestion(q){
+  var plan={type:"research",queries:[q],codes:[],subquestions:[]};
+  try{
+    var out=await llm([{role:"user",content:
+      "Analyze this California law research question. Return ONLY a JSON object, no prose, with keys: type (the string lookup if it asks about one specific section or code number, otherwise research), queries (array of 4-6 short keyword search queries using legal terminology and statutory phrasing), codes (array of 0-4 likely code abbreviations from this list: CONS BPC CIV CCP COM CORP EDC ELEC EVID FAM FIN FGC FAC GOV HNC HSC INS LAB MVC PEN PROB PCC PRC PUC RTC SHC UIC VEH WAT WIC), subquestions (array of 2-4 sub-questions that together answer it).\n\nQuestion: "+q}],400);
+    var pd=parseJsonBlock(out);
+    if(pd&&pd.queries&&pd.queries.length){
+      plan.type=(pd.type==="lookup")?"lookup":"research";
+      plan.queries=[q].concat(pd.queries.map(String)).slice(0,6);
+      if(pd.codes&&pd.codes.map) plan.codes=pd.codes.map(function(c){return String(c).toUpperCase().replace(/[^A-Z]/g,"");}).filter(function(c){return byAbbr[c];});
+      if(pd.subquestions&&pd.subquestions.map) plan.subquestions=pd.subquestions.map(String).slice(0,4);
+    }
+  }catch(e){}
+  return plan;
+}
+function searchSections2(queries,codePriority,limit){
+  var qsets=queries.map(function(q){return {raw:q.toLowerCase(),terms:termsOf(q)};});
+  var out=[],perCode={};
+  for(var abbr in loaded){
+    for(var i=0;i<loaded[abbr].length;i++){
+      var r=loaded[abbr][i];
+      if(r.kind!=="section"||!r.text) continue;
+      var hay=((r.citation||"")+" "+r.text).toLowerCase(),score=0;
+      for(var j=0;j<qsets.length;j++){
+        if(qsets[j].raw.length>3&&hay.indexOf(qsets[j].raw)>=0) score+=30;
+        var t=qsets[j].terms;
+        for(var k=0;k<t.length;k++){ if(hay.indexOf(t[k])>=0) score+=t[k].length; }
+      }
+      if(score>0){
+        if(codePriority&&codePriority.indexOf(abbr)>=0) score+=25;
+        out.push({abbr:abbr,r:r,score:score});
+      }
+    }
+  }
+  out.sort(function(a,b){return b.score-a.score;});
+  var res=[];
+  for(var i=0;i<out.length&&res.length<(limit||24);i++){
+    var c=out[i].abbr; perCode[c]=(perCode[c]||0)+1;
+    if(perCode[c]>6) continue;
+    res.push(out[i]);
+  }
+  return res;
+}
+async function analyzeSections(q,candidates){
+  try{
+    var listing=candidates.map(function(x,i){
+      var cite=x.r.citation||(x.abbr+" § "+x.r.section);
+      return "["+i+"] "+cite+" - "+String(x.r.text||"").slice(0,700).replace(/\s+/g," ");
+    }).join("\n\n");
+    var out=await llm([{role:"user",content:
+      "Research question: "+q+"\n\nCandidate California statute sections:\n\n"+listing+
+      "\n\nReturn ONLY a JSON array of the indices (numbers) of the 6-12 sections most relevant to answering, ordered by importance. No prose."}],400);
+    var arr=parseJsonBlock(out);
+    if(arr&&arr.length){
+      var picked=[];
+      for(var i=0;i<arr.length&&picked.length<12;i++){
+        var idx=parseInt(arr[i],10);
+        if(idx>=0&&idx<candidates.length&&picked.indexOf(candidates[idx])<0) picked.push(candidates[idx]);
+      }
+      if(picked.length) return picked;
+    }
+  }catch(e){}
+  return candidates.slice(0,8);
+}
 async function ask(ev){
   ev.preventDefault();
-  const q=$("q").value.trim(); if(!q) return;
+  var q=$("q").value.trim(); if(!q) return;
   $("q").value="";
   addMsg(esc(q),"user");
   $("askBtn").disabled=true;
-  const st=addStatus("Thinking…");
+  var st=addStatus("Understanding the research question\u2026");
   try{
-    if(!corpusReady && !corpusLoading){ st.setText("Loading the codes (first time only)…"); await loadCorpus(); }
-    let queries=[q];
-    if(corpusReady){
-      st.setText("Planning search…");
-      try{
-        const exp=await llm([{role:"user",content:
-          'Generate 4 short keyword search queries (legal terminology, statutory phrasing, section numbers if mentioned) to find California statutes answering this question. Return ONLY a JSON array of strings.\n\nQuestion: '+q}],300);
-        const arr=JSON.parse((exp.match(/\[[\s\S]*\]/)||["[]"])[0]);
-        if(Array.isArray(arr)&&arr.length) queries=[q].concat(arr.map(String)).slice(0,5);
-      }catch(e){}
+    if(!corpusReady && !corpusLoading){ st.setText("Loading the codes (first time only)\u2026"); await loadCorpus(); }
+    var plan={type:"research",queries:[q],codes:[],subquestions:[]};
+    if(corpusReady){ plan=await planQuestion(q); }
+    st.setText(plan.type==="lookup"?"Locating the section\u2026":"Retrieving relevant sources\u2026");
+    await new Promise(function(r){setTimeout(r)});
+    var candidates=corpusReady?searchSections2(plan.queries,plan.codes,24):[];
+    var used=candidates;
+    if(plan.type!=="lookup"&&candidates.length>10){
+      st.setText("Analyzing "+candidates.length+" retrieved sections\u2026");
+      used=await analyzeSections(q,candidates);
     }
-    st.setText("Searching the codes…");
-    await new Promise(r=>setTimeout(r));
-    const hits = corpusReady ? searchSections(queries) : [];
-    st.setText("Reading "+(hits.length?hits.length+" relevant sections":"—")+" and answering…");
-    const context = hits.length
-      ? "Retrieved sections from the California Codes corpus:\n\n"+hits.map((x,i)=>{
-          const cite=x.r.citation||(x.abbr+" § "+x.r.section);
-          return "["+(i+1)+"] "+cite+(x.r.repealed?" (REPEALED)":"")+"\n"+(x.r.text||"").slice(0,1600);
+    st.setText("Reasoning across "+(used.length?used.length+" sources":"sources")+" and drafting the answer\u2026");
+    var context=used.length
+      ?"Retrieved sections from the California Codes corpus:\n\n"+used.map(function(x,i){
+          var cite=x.r.citation||(x.abbr+" § "+x.r.section);
+          return "["+(i+1)+"] "+cite+(x.r.repealed?" (REPEALED)":"")+"\n"+String(x.r.text||"").slice(0,1600);
         }).join("\n\n")
-      : "No California statutes were retrieved for this question - answer from your general knowledge and say that the corpus had no direct match.";
-    history.push({role:"user",content:context+"\n\nQuestion: "+q});
-    const answer=await llm([{role:"system",content:SYSTEM_PROMPT}].concat(history.slice(-6)),1600);
+      :"No California statutes were retrieved for this question - answer from your general knowledge and say that the corpus had no direct match.";
+    var prompt=context+"\n\nQuestion: "+q;
+    if(plan.subquestions&&plan.subquestions.length) prompt+="\n\nSub-questions to cover: "+plan.subquestions.join(" | ");
+    history.push({role:"user",content:prompt});
+    var answer=await llm([{role:"system",content:SYSTEM_PROMPT}].concat(history.slice(-6)),1600);
     history.push({role:"assistant",content:answer});
     st.remove();
-    addMsg(tinyMd(answer),"ai",hits.map(x=>({abbr:x.abbr,r:x.r,cite:x.r.citation||(x.abbr+" § "+x.r.section)})));
+    addMsg(tinyMd(answer),"ai",used.map(function(x){return {abbr:x.abbr,r:x.r,cite:x.r.citation||(x.abbr+" § "+x.r.section)};}));
   }catch(e){
     st.remove();
-    let m=String(e.message);
-    if(m.indexOf("NOKEY:")===0) m="Sarvam needs an API key — click ⚙ and paste one from dashboard.sarvam.ai (it's stored only in your browser), or switch the engine to “free (no key)”.";
+    var m=String(e.message);
+    if(m.indexOf("NOKEY:")===0) m="Sarvam needs an API key - click the gear to add one, or switch the engine to free (no key).";
     else if(provider!=="pollinations"&&/Failed to fetch|NetworkError|CORS/i.test(m)) m+="\n\nIf this persists, the free engine or OpenRouter are the most reliable from a browser.";
     addMsg(esc(m),"ai");
   }finally{ $("askBtn").disabled=false; $("q").focus(); }
 }
-
 function renderNav(){
   $("codeNav").innerHTML = CODES.map(c=>
     '<a data-abbr="'+c.abbr+'" onclick="openCode(\''+c.abbr+'\')"><span>'+esc(c.name)+'</span><small>'+c.sections.toLocaleString()+'</small></a>').join("");
@@ -391,7 +458,7 @@ function toggleTheme(){
   if(saved)document.documentElement.dataset.theme=saved;
   else if(matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.dataset.theme="dark";
   $("engine").value = PROVIDERS[provider] ? provider : "pollinations";
-  addMsg("I am an AI with the <b>complete California Codes</b> at my fingertips - 162,324 sections it searches and cites before answering - plus my own legal knowledge for anything beyond the codes. Ask me anything — all 29 codes plus the Constitution, 162,324 sections — before answering, and cite what I used.\n\n<b>Powered by Sarvam AI</b> (sarvam-105b-conversations) - built in and ready, no setup needed. Ask away.","ai");
+  addMsg("For every question I run a research pipeline: <b>understand the question, retrieve sources, analyze them, reason across them, then answer with citations</b> - grounded in all 162,324 sections of the California Codes, plus my own legal knowledge for what lies beyond. Ask me anything — all 29 codes plus the Constitution, 162,324 sections — before answering, and cite what I used.\n\n<b>Powered by Sarvam AI</b> (sarvam-105b-conversations) - built in and ready, no setup needed. Ask away.","ai");
   loadCorpus();
 })();
 </script>
