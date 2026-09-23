@@ -173,7 +173,7 @@ const SYSTEM_PROMPT = 'You are the California legislative research assistant. Yo
 
 const $ = (id)=>document.getElementById(id);
 const CODES=[]; const byAbbr={}; const loaded={}; let corpusReady=false, corpusLoading=false;
-let provider = localStorage.getItem("ai.provider") || "sarvam";
+let provider = localStorage.getItem("ai2.provider") || "sarvam";
 let history = [];
 
 function esc(s){ const A=String.fromCharCode(38); return String(s==null?"":s).replace(new RegExp(A,"g"), A+"amp;").replace(/</g, A+"lt;").replace(/>/g, A+"gt;"); }
@@ -189,9 +189,9 @@ function tinyMd(md){
   return h.split(/\n{2,}/).map(p=>/^\s*<(ul|ol|h4)/.test(p)?p:"<p>"+p.replace(/\n/g,"<br>")+"</p>").join("");
 }
 function getProvider(){ return PROVIDERS[provider] || PROVIDERS.sarvam; }
-function getModel(){ return localStorage.getItem("ai.model."+provider) || getProvider().model; }
+function getModel(){ var m = localStorage.getItem("ai2.model."+provider); if(provider==="sarvam" && (!m || m==="sarvam-m")) return getProvider().model; return m || getProvider().model; }
 const SARVAM_KEY = "sk_2tvionrw_hfDAK3RK1XhF66Ix9NfM4kSQ";
-function getKey(){ return localStorage.getItem("ai.key."+provider) || (getProvider().builtinKey ? SARVAM_KEY : ""); }
+function getKey(){ return localStorage.getItem("ai2.key."+provider) || (getProvider().builtinKey ? SARVAM_KEY : ""); }
 
 async function loadCorpus(){
   if(corpusReady||corpusLoading) return; corpusLoading=true;
@@ -366,7 +366,7 @@ function showTab(t){
   $("tab-ai").classList.toggle("active",t==="ai");
   $("tab-codes").classList.toggle("active",t==="codes");
 }
-function engineChanged(){ provider=$("engine").value; localStorage.setItem("ai.provider",provider);
+function engineChanged(){ provider=$("engine").value; localStorage.setItem("ai2.provider",provider);
   if(getProvider().needsKey&&!getKey()) openSettings(); }
 function openSettings(){
   $("sProvider").value=provider;
@@ -375,9 +375,9 @@ function openSettings(){
   $("modalBg").classList.add("show");
 }
 function saveSettings(){
-  provider=$("sProvider").value; localStorage.setItem("ai.provider",provider);
-  localStorage.setItem("ai.model."+provider,$("sModel").value.trim());
-  localStorage.setItem("ai.key."+provider,$("sKey").value.trim());
+  provider=$("sProvider").value; localStorage.setItem("ai2.provider",provider);
+  localStorage.setItem("ai2.model."+provider,$("sModel").value.trim());
+  localStorage.setItem("ai2.key."+provider,$("sKey").value.trim());
   closeSettings();
 }
 function closeSettings(){ $("modalBg").classList.remove("show"); }
