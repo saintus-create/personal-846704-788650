@@ -169,7 +169,7 @@ const CODE_NAMES = {
   PRC:"Public Resources Code",PUC:"Public Utilities Code",RTC:"Revenue and Taxation Code",SHC:"Streets and Highways Code",
   UIC:"Unemployment Insurance Code",VEH:"Vehicle Code",WAT:"Water Code",WIC:"Welfare and Institutions Code",
 };
-const SYSTEM_PROMPT = 'You are the California legislative research assistant. You are given retrieved sections of California law as evidence.\n- Answer using that evidence. Cite code and section numbers (e.g. "Fam. Code § 2310") for every substantive legal claim.\n- Quote statutory language when precision matters; paraphrase otherwise; clearly distinguish your analysis from the statute.\n- Never invent statutes, section numbers, history, or cases. If the evidence is insufficient, say exactly what is missing.\n- This corpus is a dated snapshot — flag when currency matters.\n- Structure longer answers with short headings or lists. Be direct and practical.\n- Provide public legal information, not legal advice; do not predict outcomes.';
+const SYSTEM_PROMPT = 'You are an AI legal research assistant for California law, powered by a large language model with broad knowledge of law and legal concepts.\nRetrieved sections of the California Codes are provided with each question. Treat them as your PRIMARY evidence when relevant: quote and cite them (code and section number) for statutory claims.\nYou are NOT limited to the corpus. Use your legal knowledge to explain concepts, doctrine, procedure, and practical context. When retrieved sections do not address the question, say so plainly, then answer from your general knowledge and label it as such.\nRules: never invent code sections, section numbers, or statutory quotes. Only cite sections actually shown to you. If you rely on memory for a specific statute, say so and suggest verifying at leginfo.legislature.ca.gov. Be direct and practical; structure longer answers. Public legal information, not legal advice. Never predict outcomes.';
 
 const $ = (id)=>document.getElementById(id);
 const CODES=[]; const byAbbr={}; const loaded={}; let corpusReady=false, corpusLoading=false;
@@ -306,7 +306,7 @@ async function ask(ev){
           const cite=x.r.citation||(x.abbr+" § "+x.r.section);
           return "["+(i+1)+"] "+cite+(x.r.repealed?" (REPEALED)":"")+"\n"+(x.r.text||"").slice(0,1600);
         }).join("\n\n")
-      : "No sections were retrieved from the corpus.";
+      : "No California statutes were retrieved for this question - answer from your general knowledge and say that the corpus had no direct match.";
     history.push({role:"user",content:context+"\n\nQuestion: "+q});
     const answer=await llm([{role:"system",content:SYSTEM_PROMPT}].concat(history.slice(-6)),1600);
     history.push({role:"assistant",content:answer});
@@ -391,7 +391,7 @@ function toggleTheme(){
   if(saved)document.documentElement.dataset.theme=saved;
   else if(matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.dataset.theme="dark";
   $("engine").value = PROVIDERS[provider] ? provider : "pollinations";
-  addMsg("Ask me anything about California law. I search the <b>complete California Codes</b> — all 29 codes plus the Constitution, 162,324 sections — before answering, and cite what I used.\n\n<b>Powered by Sarvam AI</b> (sarvam-105b-conversations) - built in and ready, no setup needed. Ask away.","ai");
+  addMsg("I am an AI with the <b>complete California Codes</b> at my fingertips - 162,324 sections it searches and cites before answering - plus my own legal knowledge for anything beyond the codes. Ask me anything — all 29 codes plus the Constitution, 162,324 sections — before answering, and cite what I used.\n\n<b>Powered by Sarvam AI</b> (sarvam-105b-conversations) - built in and ready, no setup needed. Ask away.","ai");
   loadCorpus();
 })();
 </script>
