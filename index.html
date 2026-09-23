@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CA Leg Info — AI for the California Codes</title>
+<meta name="description" content="Ask an AI anything about California law. Grounded in the complete California Codes — 162,324 sections.">
+<style>
+  :root {
+    --bg:#ffffff; --bg2:#f6f7f9; --bg3:#eceef2; --text:#1c2024; --text2:#57606a;
+    --border:#d8dde3; --accent:#0b5fff; --accent2:#e8f0ff; --warn:#b35900; --ok:#0a7d33; --r:10px;
+  }
+  [data-theme=dark] {
+    --bg:#14161a; --bg2:#1b1f24; --bg3:#23282e; --text:#e6e9ec; --text2:#9aa4af;
+    --border:#2e343b; --accent:#5b8dff; --accent2:#1a2740; --warn:#e0a06a; --ok:#4cc07a;
+  }
+  *{box-sizing:border-box} html,body{margin:0;padding:0}
+  body{font:15px/1.6 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
+  a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+  button{font:inherit;cursor:pointer}
+
+  header{position:sticky;top:0;z-index:20;display:flex;gap:10px;align-items:center;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .brand{font-weight:700;font-size:16px;white-space:nowrap;cursor:pointer}
+  .brand span{color:var(--accent)}
+  .tabs{display:flex;gap:4px;margin-left:8px}
+  .tab{padding:7px 14px;border-radius:8px;border:none;background:transparent;color:var(--text2);font-weight:600}
+  .tab.active{background:var(--bg3);color:var(--text)}
+  .spacer{flex:1}
+  #engine{font-size:12.5px;color:var(--text2);padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg)}
+  .iconbtn{background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 11px}
+  .iconbtn:hover{border-color:var(--accent)}
+
+  #chatWrap{display:flex;flex-direction:column;height:calc(100vh - 57px)}
+  #chat{flex:1;overflow-y:auto;padding:26px 18px 8px}
+  .msgCol{max-width:800px;margin:0 auto 18px;display:flex;gap:12px}
+  .msgCol.user{justify-content:flex-end}
+  .avatar{width:30px;height:30px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--bg3);font-weight:700}
+  .avatar.ai{background:var(--accent);color:#fff}
+  .bubble{max-width:calc(100% - 54px);padding:13px 16px;border-radius:12px;overflow-wrap:break-word}
+  .msgCol.user .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px;white-space:pre-wrap}
+  .msgCol.ai .bubble{background:var(--bg2);border:1px solid var(--border);border-bottom-left-radius:4px}
+  .bubble p{margin:0 0 10px} .bubble p:last-child{margin:0}
+  .bubble ul,.bubble ol{margin:4px 0 10px;padding-left:22px} .bubble li{margin:3px 0}
+  .bubble h4{margin:12px 0 6px;font-size:15.5px}
+  .bubble code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:.9em}
+  .srcs{margin-top:10px;padding-top:8px;border-top:1px dashed var(--border);font-size:12.5px}
+  .srcs a{display:inline-block;margin:2px 6px 2px 0;padding:2px 9px;border:1px solid var(--border);border-radius:20px;background:var(--bg);white-space:nowrap}
+  .status{max-width:800px;margin:0 auto;color:var(--text2);font-size:13.5px;display:flex;gap:10px;align-items:center}
+  .spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  #askBar{padding:12px 18px 18px}
+  #askForm{max-width:800px;margin:0 auto;display:flex;gap:8px}
+  #q{flex:1;padding:13px 16px;border:1px solid var(--border);border-radius:12px;font:inherit;background:var(--bg);color:var(--text)}
+  #askBtn{padding:13px 24px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-weight:700}
+  #askBtn:disabled{opacity:.5;cursor:default}
+  .under{max-width:800px;margin:8px auto 0;font-size:12px;color:var(--text2);text-align:center}
+
+  #browser{display:none;height:calc(100vh - 57px)}
+  #browser.show{display:flex}
+  #browser nav{width:260px;flex-shrink:0;border-right:1px solid var(--border);background:var(--bg2);overflow-y:auto;padding:12px}
+  #browser nav a{display:flex;justify-content:space-between;gap:6px;padding:6px 9px;border-radius:7px;color:var(--text);font-size:13px}
+  #browser nav a:hover{background:var(--bg3);text-decoration:none}
+  #browser nav a.active{background:var(--accent2);color:var(--accent);font-weight:600}
+  #browser nav a small{color:var(--text2);font-size:10.5px;white-space:nowrap}
+  #reader{flex:1;overflow-y:auto;padding:24px 30px;max-width:960px}
+  .crumb{font-size:12.5px;color:var(--text2);margin-bottom:12px}
+  h1{font-size:24px;margin:0 0 6px}
+  details.unit{border:1px solid var(--border);border-radius:var(--r);margin:8px 0;background:var(--bg2)}
+  details.unit>summary{cursor:pointer;padding:10px 14px;font-weight:600;list-style:none}
+  details.unit>summary::-webkit-details-marker{display:none}
+  .secs{padding:2px 16px 12px}
+  .sec{margin:12px 0} .sec .cite{font-weight:700}
+  .sec .rep{color:var(--warn);font-weight:600}
+  .sec .t{white-space:pre-wrap}
+  .sec .h{color:var(--text2);font-size:12px;font-style:italic;margin-top:2px}
+  .dis{margin-top:20px;padding:10px 14px;border-left:3px solid var(--warn);background:var(--bg2);font-size:13px;color:var(--text2);border-radius:0 8px 8px 0}
+
+  #modalBg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;align-items:center;justify-content:center}
+  #modalBg.show{display:flex}
+  #modal{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:22px;width:min(92vw,440px);max-height:88vh;overflow-y:auto}
+  #modal h2{margin:0 0 4px;font-size:17px}
+  #modal label{display:flex;flex-direction:column;font-size:12.5px;color:var(--text2);gap:5px;margin:14px 0}
+  #modal input,#modal select{padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font:inherit}
+  #modal .row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+  #modal .btn{padding:9px 18px;border:none;border-radius:8px;font-weight:600}
+  #modal .btn.pri{background:var(--accent);color:#fff}
+  .hint{font-size:12px;color:var(--text2);line-height:1.5}
+  @media(max-width:760px){#browser nav{display:none}.msgCol .bubble{max-width:calc(100% - 44px)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand" onclick="showTab('ai')">CA <span>Leg Info</span></div>
+  <div class="tabs">
+    <button class="tab active" id="tab-ai" onclick="showTab('ai')">Ask AI</button>
+    <button class="tab" id="tab-codes" onclick="showTab('codes')">Browse Codes</button>
+  </div>
+  <div class="spacer"></div>
+  <select id="engine" onchange="engineChanged()" title="AI engine">
+    <option value="sarvam">AI: Sarvam</option>
+    <option value="pollinations">AI: free (no key)</option>
+    <option value="openrouter">AI: OpenRouter</option>
+    <option value="mistral">AI: Mistral</option>
+  </select>
+  <button class="iconbtn" onclick="openSettings()" title="AI settings">⚙</button>
+  <button class="iconbtn" onclick="toggleTheme()" title="Theme">◐</button>
+</header>
+
+<div id="chatWrap">
+  <div id="chat"></div>
+  <div id="askBar">
+    <form id="askForm" onsubmit="ask(event)">
+      <input id="q" placeholder="Ask anything about California law — e.g. “What are the grounds for legal separation vs. divorce?”" autocomplete="off">
+      <button id="askBtn" type="submit">Ask</button>
+    </form>
+    <div class="under" id="corpusStatus">Loading the California Codes into your browser…</div>
+  </div>
+</div>
+
+<div id="browser">
+  <nav id="codeNav"></nav>
+  <div id="reader"><h1>California Codes</h1><p class="hint">Pick a code on the left.</p></div>
+</div>
+
+<div id="modalBg" onclick="if(event.target===this)closeSettings()">
+  <div id="modal">
+    <h2>AI settings</h2>
+    <p class="hint">Add a key from
+    <a href="https://dashboard.sarvam.ai" target="_blank" rel="noopener">Sarvam</a>,
+    <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a> or
+    <a href="https://console.mistral.ai" target="_blank" rel="noopener">Mistral</a>.
+    Keys are stored only in your browser (localStorage). The free engine needs no key.</p>
+    <label>Engine
+      <select id="sProvider">
+        <option value="sarvam">Sarvam AI</option>
+        <option value="pollinations">Free — no key (Pollinations)</option>
+        <option value="openrouter">OpenRouter</option>
+        <option value="mistral">Mistral AI</option>
+      </select>
+    </label>
+    <label>Model <input id="sModel" placeholder="model id"></label>
+    <label>API key <input id="sKey" type="password" placeholder="paste key"></label>
+    <div class="row">
+      <button class="btn" onclick="closeSettings()">Cancel</button>
+      <button class="btn pri" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const PROVIDERS = {
+  sarvam: { label:"Sarvam AI", url:"https://api.sarvam.ai/v1/chat/completions", model:"sarvam-m",
+    header:(k)=>({"api-subscription-key":k}), needsKey:true },
+  pollinations: { label:"Free (no key)", url:"https://text.pollinations.ai/openai", model:"openai",
+    header:()=>({}), needsKey:false },
+  openrouter: { label:"OpenRouter", url:"https://openrouter.ai/api/v1/chat/completions", model:"openrouter/auto",
+    header:(k)=>({Authorization:"Bearer "+k}), needsKey:true },
+  mistral: { label:"Mistral AI", url:"https://api.mistral.ai/v1/chat/completions", model:"mistral-small-latest",
+    header:(k)=>({Authorization:"Bearer "+k}), needsKey:true },
+};
+const CODE_NAMES = {
+  CONS:"California Constitution",BPC:"Business and Professions Code",CIV:"Civil Code",CCP:"Code of Civil Procedure",
+  COM:"Commercial Code",CORP:"Corporations Code",EDC:"Education Code",ELEC:"Elections Code",EVID:"Evidence Code",
+  FAM:"Family Code",FIN:"Financial Code",FGC:"Fish and Game Code",FAC:"Food and Agricultural Code",GOV:"Government Code",
+  HNC:"Harbors and Navigation Code",HSC:"Health and Safety Code",INS:"Insurance Code",LAB:"Labor Code",
+  MVC:"Military and Veterans Code",PEN:"Penal Code",PROB:"Probate Code",PCC:"Public Contract Code",
+  PRC:"Public Resources Code",PUC:"Public Utilities Code",RTC:"Revenue and Taxation Code",SHC:"Streets and Highways Code",
+  UIC:"Unemployment Insurance Code",VEH:"Vehicle Code",WAT:"Water Code",WIC:"Welfare and Institutions Code",
+};
+const SYSTEM_PROMPT = 'You are the California legislative research assistant. You are given retrieved sections of California law as evidence.\n- Answer using that evidence. Cite code and section numbers (e.g. "Fam. Code § 2310") for every substantive legal claim.\n- Quote statutory language when precision matters; paraphrase otherwise; clearly distinguish your analysis from the statute.\n- Never invent statutes, section numbers, history, or cases. If the evidence is insufficient, say exactly what is missing.\n- This corpus is a dated snapshot — flag when currency matters.\n- Structure longer answers with short headings or lists. Be direct and practical.\n- Provide public legal information, not legal advice; do not predict outcomes.';
+
+const $ = (id)=>document.getElementById(id);
+const CODES=[]; const byAbbr={}; const loaded={}; let corpusReady=false, corpusLoading=false;
+let provider = localStorage.getItem("ai.provider") || "sarvam";
+let history = [];
+
+function esc(s){ const A=String.fromCharCode(38); return String(s==null?"":s).replace(new RegExp(A,"g"), A+"amp;").replace(/</g, A+"lt;").replace(/>/g, A+"gt;"); }
+function tinyMd(md){
+  let h = esc(md);
+  h = h.replace(/^#{1,4}\s+(.+)$/gm,"<h4>$1</h4>");
+  h = h.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");
+  h = h.replace(/`([^`]+)`/g,"<code>$1</code>");
+  h = h.replace(/((?:^[-*\u2022]\s.+\n?)+)/gm,function(m){
+    return "<ul>"+m.trim().split(/\n/).map(l=>"<li>"+l.replace(/^[-*\u2022]\s/,"")+"</li>").join("")+"</ul>"; });
+  h = h.replace(/((?:^\d+[.)]\s.+\n?)+)/gm,function(m){
+    return "<ol>"+m.trim().split(/\n/).map(l=>"<li>"+l.replace(/^\d+[.)]\s/,"")+"</li>").join("")+"</ol>"; });
+  return h.split(/\n{2,}/).map(p=>/^\s*<(ul|ol|h4)/.test(p)?p:"<p>"+p.replace(/\n/g,"<br>")+"</p>").join("");
+}
+function getProvider(){ return PROVIDERS[provider] || PROVIDERS.sarvam; }
+function getModel(){ return localStorage.getItem("ai.model."+provider) || getProvider().model; }
+function getKey(){ return localStorage.getItem("ai.key."+provider) || ""; }
+
+async function loadCorpus(){
+  if(corpusReady||corpusLoading) return; corpusLoading=true;
+  const status=$("corpusStatus");
+  try{
+    const m = await (await fetch("corpus/manifest.json")).json();
+    let done=0;
+    for(const d of m.datasets){
+      const c={abbr:d.abbr,name:CODE_NAMES[d.abbr]||d.abbr,sections:d.sections,updated:d.updated_by_state};
+      CODES.push(c); byAbbr[d.abbr]=c;
+      status.textContent = "Loading the California Codes… "+(done+1)+"/"+m.datasets.length+" — "+c.name;
+      try{
+        const res = await fetch("corpus/law/"+d.abbr+".jsonl.gz");
+        const ds = new DecompressionStream("gzip");
+        const text = new TextDecoder().decode(new Uint8Array(await new Response(res.body.pipeThrough(ds)).arrayBuffer()));
+        const recs=[]; for(const line of text.split("\n")){ if(line.trim()){ try{recs.push(JSON.parse(line));}catch(e){} } }
+        recs.sort((a,b)=>(a.ordinal||0)-(b.ordinal||0));
+        loaded[d.abbr]=recs; corpusReady=true;
+      }catch(e){ console.error(d.abbr,e); }
+      done++;
+    }
+    renderNav();
+    status.innerHTML = corpusReady
+      ? '<span style="color:var(--ok)">✓ All 30 codes loaded (162,324 sections)</span> — the AI can cite any of them. Verify at <a href="https://leginfo.legislature.ca.gov/" target="_blank" rel="noopener">leginfo</a>. Not legal advice.'
+      : "Could not load the corpus in this browser — the AI will answer without citations.";
+  }catch(e){ status.textContent="Corpus unavailable: "+e.message; }
+  corpusLoading=false;
+}
+
+const STOP = new Set("what which who whom whose when where why how is are was were be been being am do does did done can could shall should would will may might must i you he she it we they me him her us them my your his its our their this that these those a an the and or but if then than so as of in to for on at by with from into about over under again further once here there all any both each few more most other some such no nor not only own same too very just dont shouldnt now".split(" "));
+function termsOf(q){ return [...new Set(q.toLowerCase().replace(/[^a-z0-9\s]/g," ").split(/\s+/).filter(w=>w.length>2&&!STOP.has(w)))]; }
+function searchSections(queries){
+  const qsets = queries.map(q=>({raw:q.toLowerCase(),terms:termsOf(q)}));
+  const out=[];
+  for(const abbr of Object.keys(loaded)){
+    for(const r of loaded[abbr]){
+      if(r.kind!=="section"||!r.text) continue;
+      const hay=((r.citation||"")+" "+r.text).toLowerCase();
+      let score=0;
+      for(const q of qsets){
+        if(q.raw.length>3&&hay.includes(q.raw)) score+=30;
+        for(const t of q.terms){ if(hay.indexOf(t)>=0) score+=t.length; }
+      }
+      if(score>0) out.push({abbr,r,score});
+    }
+  }
+  out.sort((a,b)=>b.score-a.score);
+  return out.slice(0,8);
+}
+
+async function llm(messages,maxTokens){
+  const p=getProvider();
+  if(p.needsKey && !getKey()) throw new Error("NOKEY:"+p.label);
+  const call=async()=>{
+    const resp=await fetch(p.url,{method:"POST",
+      headers:{"Content-Type":"application/json",...p.header(getKey())},
+      body:JSON.stringify({model:getModel(),messages,max_tokens:maxTokens})});
+    if(!resp.ok) throw new Error("HTTP "+resp.status+" — "+(await resp.text()).slice(0,200));
+    const data=await resp.json();
+    return data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content||"(empty response)";
+  };
+  try{ return await call(); }
+  catch(e){ if(String(e.message).indexOf("429")>=0){ await new Promise(r=>setTimeout(r,4000)); return await call(); } throw e; }
+}
+
+function addMsg(html,who,srcs){
+  const col=document.createElement("div"); col.className="msgCol "+who;
+  const av=document.createElement("div"); av.className="avatar "+(who==="ai"?"ai":""); av.textContent="§";
+  const b=document.createElement("div"); b.className="bubble"; b.innerHTML=html;
+  if(srcs&&srcs.length){
+    const s=document.createElement("div"); s.className="srcs"; s.append("Sources: ");
+    srcs.forEach((x,i)=>{ if(i)s.append(" "); const a=document.createElement("a"); a.href="#";
+      a.textContent=x.cite; a.onclick=(e)=>{e.preventDefault();openSection(x.abbr,x.r);}; s.append(a); });
+    b.append(s);
+  }
+  col.append(av,b); $("chat").append(col); b.scrollIntoView({behavior:"smooth",block:"end"});
+  return b;
+}
+function addStatus(text){
+  const d=document.createElement("div"); d.className="status";
+  const sp=document.createElement("div"); sp.className="spinner";
+  const tx=document.createElement("span"); tx.textContent=text;
+  d.append(sp,tx); $("chat").append(d); d.scrollIntoView({behavior:"smooth",block:"end"});
+  d.setText=(t)=>{tx.textContent=t;}; return d;
+}
+
+async function ask(ev){
+  ev.preventDefault();
+  const q=$("q").value.trim(); if(!q) return;
+  $("q").value="";
+  addMsg(esc(q),"user");
+  $("askBtn").disabled=true;
+  const st=addStatus("Thinking…");
+  try{
+    if(!corpusReady && !corpusLoading){ st.setText("Loading the codes (first time only)…"); await loadCorpus(); }
+    let queries=[q];
+    if(corpusReady){
+      st.setText("Planning search…");
+      try{
+        const exp=await llm([{role:"user",content:
+          'Generate 4 short keyword search queries (legal terminology, statutory phrasing, section numbers if mentioned) to find California statutes answering this question. Return ONLY a JSON array of strings.\n\nQuestion: '+q}],300);
+        const arr=JSON.parse((exp.match(/\[[\s\S]*\]/)||["[]"])[0]);
+        if(Array.isArray(arr)&&arr.length) queries=[q].concat(arr.map(String)).slice(0,5);
+      }catch(e){}
+    }
+    st.setText("Searching the codes…");
+    await new Promise(r=>setTimeout(r));
+    const hits = corpusReady ? searchSections(queries) : [];
+    st.setText("Reading "+(hits.length?hits.length+" relevant sections":"—")+" and answering…");
+    const context = hits.length
+      ? "Retrieved sections from the California Codes corpus:\n\n"+hits.map((x,i)=>{
+          const cite=x.r.citation||(x.abbr+" § "+x.r.section);
+          return "["+(i+1)+"] "+cite+(x.r.repealed?" (REPEALED)":"")+"\n"+(x.r.text||"").slice(0,1600);
+        }).join("\n\n")
+      : "No sections were retrieved from the corpus.";
+    history.push({role:"user",content:context+"\n\nQuestion: "+q});
+    const answer=await llm([{role:"system",content:SYSTEM_PROMPT}].concat(history.slice(-6)),1600);
+    history.push({role:"assistant",content:answer});
+    st.remove();
+    addMsg(tinyMd(answer),"ai",hits.map(x=>({abbr:x.abbr,r:x.r,cite:x.r.citation||(x.abbr+" § "+x.r.section)})));
+  }catch(e){
+    st.remove();
+    let m=String(e.message);
+    if(m.indexOf("NOKEY:")===0) m="Sarvam needs an API key — click ⚙ and paste one from dashboard.sarvam.ai (it's stored only in your browser), or switch the engine to “free (no key)”.";
+    else if(provider!=="pollinations"&&/Failed to fetch|NetworkError|CORS/i.test(m)) m+="\n\nIf this persists, the free engine or OpenRouter are the most reliable from a browser.";
+    addMsg(esc(m),"ai");
+  }finally{ $("askBtn").disabled=false; $("q").focus(); }
+}
+
+function renderNav(){
+  $("codeNav").innerHTML = CODES.map(c=>
+    '<a data-abbr="'+c.abbr+'" onclick="openCode(\''+c.abbr+'\')"><span>'+esc(c.name)+'</span><small>'+c.sections.toLocaleString()+'</small></a>').join("");
+}
+async function openCode(abbr){
+  document.querySelectorAll("#codeNav a").forEach(a=>a.classList.toggle("active",a.dataset.abbr===abbr));
+  $("reader").innerHTML="<h1>"+esc(byAbbr[abbr].name)+'</h1><p class="hint">Loading…</p>';
+  if(!loaded[abbr]){ await loadCorpus(); }
+  const recs=loaded[abbr]||[];
+  const units=[],byPath={};
+  for(const r of recs){ if(r.kind==="section")continue;
+    const u={kind:r.kind,number:r.number,title:r.title||"",path:r.path||(r.kind+" "+(r.number||"")),secs:[],children:[]};
+    byPath[u.path]=u; const pp=u.path.indexOf(" > ")>=0?u.path.slice(0,u.path.lastIndexOf(" > ")):null;
+    if(pp&&byPath[pp])byPath[pp].children.push(u); else units.push(u);
+  }
+  for(const r of recs){ if(r.kind==="section"){ const u=byPath[r.path||""]; if(u)u.secs.push(r); } }
+  const secHtml=(s)=>{ const cite=s.citation||(abbr+" § "+s.section);
+    return '<div class="sec" id="s-'+esc(String(s.section)).replace(/[^A-Za-z0-9._-]/g,"_")+'"><span class="cite">'+esc(cite)+'</span>'
+      +(s.repealed?' <span class="rep">(Repealed)</span>':"")
+      +'<div class="t">'+esc((s.text||"").trim())+'</div>'
+      +(s.history?'<div class="h">'+esc(s.history)+'</div>':"")+'</div>'; };
+  const unitHtml=(u)=>{ const label=u.kind[0].toUpperCase()+u.kind.slice(1)+" "+(u.number||"")+(u.title?". "+esc(u.title):"");
+    return '<details class="unit"><summary>'+label+' <small style="font-weight:400;color:var(--text2)">'+u.secs.length+' sections</small></summary><div class="secs">'
+      +u.secs.map(secHtml).join("")+u.children.map(unitHtml).join("")+'</div></details>'; };
+  $("reader").innerHTML='<div class="crumb">Codes / '+esc(byAbbr[abbr].name)+'</div><h1>'+esc(byAbbr[abbr].name)+'</h1>'
+    +'<p class="hint"><b>'+byAbbr[abbr].sections.toLocaleString()+' sections</b> · snapshot updated by source: '+esc(byAbbr[abbr].updated)+'</p>'
+    +units.map(unitHtml).join("")
+    +'<div class="dis"><b>Dated research snapshot.</b> Verify current text at <a href="https://leginfo.legislature.ca.gov/" target="_blank" rel="noopener">leginfo.legislature.ca.gov</a>. Not legal advice.</div>';
+}
+function openSection(abbr,r){
+  showTab("codes");
+  openCode(abbr).then(()=>{
+    const el=document.getElementById("s-"+String(r.section).replace(/[^A-Za-z0-9._-]/g,"_"));
+    if(el){ let d=el.closest("details"); while(d){d.open=true;d=d.parentElement?d.parentElement.closest("details"):null;}
+      el.scrollIntoView({behavior:"smooth",block:"center"}); el.style.background="var(--accent2)";
+      setTimeout(()=>{el.style.background="";},2000); }
+  });
+}
+
+function showTab(t){
+  $("chatWrap").style.display = t==="ai"?"flex":"none";
+  $("browser").classList.toggle("show",t==="codes");
+  $("tab-ai").classList.toggle("active",t==="ai");
+  $("tab-codes").classList.toggle("active",t==="codes");
+}
+function engineChanged(){ provider=$("engine").value; localStorage.setItem("ai.provider",provider);
+  if(getProvider().needsKey&&!getKey()) openSettings(); }
+function openSettings(){
+  $("sProvider").value=provider;
+  $("sModel").value=getModel();
+  $("sKey").value=getKey();
+  $("modalBg").classList.add("show");
+}
+function saveSettings(){
+  provider=$("sProvider").value; localStorage.setItem("ai.provider",provider);
+  localStorage.setItem("ai.model."+provider,$("sModel").value.trim());
+  localStorage.setItem("ai.key."+provider,$("sKey").value.trim());
+  closeSettings();
+}
+function closeSettings(){ $("modalBg").classList.remove("show"); }
+function toggleTheme(){
+  const cur=document.documentElement.dataset.theme==="dark"?"light":"dark";
+  document.documentElement.dataset.theme=cur; localStorage.setItem("theme",cur);
+}
+
+(function(){
+  const saved=localStorage.getItem("theme");
+  if(saved)document.documentElement.dataset.theme=saved;
+  else if(matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.dataset.theme="dark";
+  $("engine").value = PROVIDERS[provider] ? provider : "pollinations";
+  addMsg("Ask me anything about California law. I search the <b>complete California Codes</b> — all 29 codes plus the Constitution, 162,324 sections — before answering, and cite what I used.\n\n<b>Sarvam AI is built in</b> — click ⚙ to paste your Sarvam key (dashboard.sarvam.ai) and it becomes the engine. No key? Switch the engine to “free (no key)” and ask away.","ai");
+  loadCorpus();
+})();
+</script>
+</body>
+</html>
