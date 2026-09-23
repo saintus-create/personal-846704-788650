@@ -141,6 +141,8 @@
     </label>
     <label>Model <input id="sModel" placeholder="model id"></label>
     <label>API key <input id="sKey" type="password" placeholder="paste key"></label>
+    <label>CourtListener token (optional, free - unlocks case-law search)
+      <input id="sClToken" type="password" placeholder="paste CourtListener token"></label>
     <div class="row">
       <button class="btn" onclick="closeSettings()">Cancel</button>
       <button class="btn pri" onclick="saveSettings()">Save</button>
@@ -169,7 +171,7 @@ const CODE_NAMES = {
   PRC:"Public Resources Code",PUC:"Public Utilities Code",RTC:"Revenue and Taxation Code",SHC:"Streets and Highways Code",
   UIC:"Unemployment Insurance Code",VEH:"Vehicle Code",WAT:"Water Code",WIC:"Welfare and Institutions Code",
 };
-const SYSTEM_PROMPT = 'You are an AI legal research assistant for California law, powered by a large language model with broad knowledge of law and legal concepts.\nRetrieved sections of the California Codes are provided with each question. Treat them as your PRIMARY evidence when relevant: quote and cite them (code and section number) for statutory claims.\nYou are NOT limited to the corpus. Use your legal knowledge to explain concepts, doctrine, procedure, and practical context. When retrieved sections do not address the question, say so plainly, then answer from your general knowledge and label it as such.\nRules: never invent code sections, section numbers, or statutory quotes. Only cite sections actually shown to you. If you rely on memory for a specific statute, say so and suggest verifying at leginfo.legislature.ca.gov. Be direct and practical; structure longer answers. Public legal information, not legal advice. Never predict outcomes.';
+const SYSTEM_PROMPT = 'You are an AI legal research assistant for California law, powered by a large language model with broad knowledge of law and legal concepts.\nRetrieved sections of the California Codes are provided with each question. Treat them as your PRIMARY evidence when relevant: quote and cite them (code and section number) for statutory claims.\nYou are NOT limited to the corpus. Use your legal knowledge to explain concepts, doctrine, procedure, and practical context. When retrieved sections do not address the question, say so plainly, then answer from your general knowledge and label it as such.\nRules: never invent code sections, section numbers, or statutory quotes. Only cite sections actually shown to you. If you rely on memory for a specific statute, say so and suggest verifying at leginfo.legislature.ca.gov. Judicial opinions from California courts may also be provided as evidence. Statutes are primary authority; opinions interpret them - cite cases by name and citation when relying on them, and distinguish statutory text from judicial interpretation. For legislative history beyond the enactment and amendment notes provided, direct the user to leginfo.legislature.ca.gov. For current rulemaking and calls for comment, direct the user to the California Office of Administrative Law (oal.ca.gov). Be direct and practical; structure longer answers. Public legal information, not legal advice. Never predict outcomes.';
 
 const $ = (id)=>document.getElementById(id);
 const CODES=[]; const byAbbr={}; const loaded={}; let corpusReady=false, corpusLoading=false;
@@ -264,7 +266,7 @@ function addMsg(html,who,srcs){
   if(srcs&&srcs.length){
     const s=document.createElement("div"); s.className="srcs"; s.append("Sources: ");
     srcs.forEach((x,i)=>{ if(i)s.append(" "); const a=document.createElement("a"); a.href="#";
-      a.textContent=x.cite; a.onclick=(e)=>{e.preventDefault();openSection(x.abbr,x.r);}; s.append(a); });
+      a.textContent=x.cite; if(x.url){a.href=x.url;a.target="_blank";a.rel="noopener";} else{a.href="#";a.onclick=(e)=>{e.preventDefault();openSection(x.abbr,x.r);};} s.append(a); });
     b.append(s);
   }
   col.append(av,b); $("chat").append(col); b.scrollIntoView({behavior:"smooth",block:"end"});
@@ -347,6 +349,32 @@ async function analyzeSections(q,candidates){
   }catch(e){}
   return candidates.slice(0,8);
 }
+async function searchCaseLaw(queries){
+  var token=localStorage.getItem("ai2.cltoken")||"";
+  var out=[],tried=0;
+  for(var i=0;i<queries.length&&out.length<5&&tried<2;i++){
+    var q=queries[i]; if(!q||q.length<8) continue;
+    tried++;
+    try{
+      var url="https://api.courtlistener.com/v3/search/?q="+encodeURIComponent(q)+"&court=cal+calctapp&type=o&stat_Precedential=on";
+      var resp=await fetch(url, token?{headers:{Authorization:"Token "+token}}:{});
+      if(!resp.ok){ if(resp.status===429) break; continue; }
+      var data=await resp.json();
+      var results=(data&&data.results)||[];
+      for(var j=0;j<results.length&&out.length<5;j++){
+        var r=results[j], cite="";
+        try{ cite=(r.citations&&r.citations[0]&&r.citations[0].cite)||""; }catch(e){}
+        var dup=false;
+        for(var k=0;k<out.length;k++){ if(out[k].caseName===r.caseName) dup=true; }
+        if(dup) continue;
+        out.push({caseName:r.caseName||"Unknown case",cite:cite,court:r.court||"",date:r.dateFiled||"",
+          snippet:String(r.snippet||"").replace(/<[^>]+>/g,"").slice(0,700),
+          url:r.absolute_url?("https://www.courtlistener.com"+r.absolute_url):""});
+      }
+    }catch(e){ break; }
+  }
+  return out;
+}
 async function ask(ev){
   ev.preventDefault();
   var q=$("q").value.trim(); if(!q) return;
@@ -362,24 +390,34 @@ async function ask(ev){
     await new Promise(function(r){setTimeout(r)});
     var candidates=corpusReady?searchSections2(plan.queries,plan.codes,24):[];
     var used=candidates;
+    var cases=[];
     if(plan.type!=="lookup"&&candidates.length>10){
-      st.setText("Analyzing "+candidates.length+" retrieved sections\u2026");
-      used=await analyzeSections(q,candidates);
+      st.setText("Analyzing "+candidates.length+" sections and searching judicial opinions\u2026");
+      var both=await Promise.all([analyzeSections(q,candidates), searchCaseLaw(plan.queries)]);
+      used=both[0]; cases=both[1];
+    } else if(corpusReady){
+      cases=await searchCaseLaw(plan.queries);
     }
     st.setText("Reasoning across "+(used.length?used.length+" sources":"sources")+" and drafting the answer\u2026");
     var context=used.length
       ?"Retrieved sections from the California Codes corpus:\n\n"+used.map(function(x,i){
           var cite=x.r.citation||(x.abbr+" § "+x.r.section);
-          return "["+(i+1)+"] "+cite+(x.r.repealed?" (REPEALED)":"")+"\n"+String(x.r.text||"").slice(0,1600);
+          return "["+(i+1)+"] "+cite+(x.r.repealed?" (REPEALED)":"")+"\n"+String(x.r.text||"").slice(0,1600)
+            +(x.r.history?"\nLegislative history: "+String(x.r.history).slice(0,220):"");
         }).join("\n\n")
       :"No California statutes were retrieved for this question - answer from your general knowledge and say that the corpus had no direct match.";
+    if(cases.length){
+      context+="\n\nRetrieved California judicial opinions (precedential, via CourtListener):\n\n"+cases.map(function(x,i){
+        return "Case "+(i+1)+": "+x.caseName+(x.cite?" ("+x.cite:"(")+(x.date?", "+x.date:"")+")\n"+x.snippet;
+      }).join("\n\n");
+    }
     var prompt=context+"\n\nQuestion: "+q;
     if(plan.subquestions&&plan.subquestions.length) prompt+="\n\nSub-questions to cover: "+plan.subquestions.join(" | ");
     history.push({role:"user",content:prompt});
     var answer=await llm([{role:"system",content:SYSTEM_PROMPT}].concat(history.slice(-6)),1600);
     history.push({role:"assistant",content:answer});
     st.remove();
-    addMsg(tinyMd(answer),"ai",used.map(function(x){return {abbr:x.abbr,r:x.r,cite:x.r.citation||(x.abbr+" § "+x.r.section)};}));
+    var chips=used.map(function(x){return {abbr:x.abbr,r:x.r,cite:x.r.citation||(x.abbr+" § "+x.r.section)};});for(var ci=0;ci<cases.length;ci++) chips.push({cite:cases[ci].caseName+(cases[ci].cite?" ("+cases[ci].cite+")":""),url:cases[ci].url});addMsg(tinyMd(answer),"ai",chips);
   }catch(e){
     st.remove();
     var m=String(e.message);
@@ -439,12 +477,14 @@ function openSettings(){
   $("sProvider").value=provider;
   $("sModel").value=getModel();
   $("sKey").value=getKey();
+  $("sClToken").value=localStorage.getItem("ai2.cltoken")||"";
   $("modalBg").classList.add("show");
 }
 function saveSettings(){
   provider=$("sProvider").value; localStorage.setItem("ai2.provider",provider);
   localStorage.setItem("ai2.model."+provider,$("sModel").value.trim());
   localStorage.setItem("ai2.key."+provider,$("sKey").value.trim());
+  localStorage.setItem("ai2.cltoken",$("sClToken").value.trim());
   closeSettings();
 }
 function closeSettings(){ $("modalBg").classList.remove("show"); }
