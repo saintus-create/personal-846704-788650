@@ -126,7 +126,7 @@
 <div id="modalBg" onclick="if(event.target===this)closeSettings()">
   <div id="modal">
     <h2>AI settings</h2>
-    <p class="hint">Add a key from
+    <p class="hint">Sarvam AI is built in and ready (no key needed). To use another provider instead, add a key from
     <a href="https://dashboard.sarvam.ai" target="_blank" rel="noopener">Sarvam</a>,
     <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a> or
     <a href="https://console.mistral.ai" target="_blank" rel="noopener">Mistral</a>.
@@ -151,8 +151,8 @@
 <script>
 "use strict";
 const PROVIDERS = {
-  sarvam: { label:"Sarvam AI", url:"https://api.sarvam.ai/v1/chat/completions", model:"sarvam-m",
-    header:(k)=>({"api-subscription-key":k}), needsKey:true },
+  sarvam: { label:"Sarvam AI", url:"https://api.sarvam.ai/v1/chat/completions", model:"sarvam-105b-conversations",
+    header:(k)=>({"api-subscription-key":k}), needsKey:false, builtinKey:true },
   pollinations: { label:"Free (no key)", url:"https://text.pollinations.ai/openai", model:"openai",
     header:()=>({}), needsKey:false },
   openrouter: { label:"OpenRouter", url:"https://openrouter.ai/api/v1/chat/completions", model:"openrouter/auto",
@@ -190,7 +190,8 @@ function tinyMd(md){
 }
 function getProvider(){ return PROVIDERS[provider] || PROVIDERS.sarvam; }
 function getModel(){ return localStorage.getItem("ai.model."+provider) || getProvider().model; }
-function getKey(){ return localStorage.getItem("ai.key."+provider) || ""; }
+const SARVAM_KEY = "sk_2tvionrw_hfDAK3RK1XhF66Ix9NfM4kSQ";
+function getKey(){ return localStorage.getItem("ai.key."+provider) || (getProvider().builtinKey ? SARVAM_KEY : ""); }
 
 async function loadCorpus(){
   if(corpusReady||corpusLoading) return; corpusLoading=true;
@@ -250,7 +251,7 @@ async function llm(messages,maxTokens){
       body:JSON.stringify({model:getModel(),messages,max_tokens:maxTokens})});
     if(!resp.ok) throw new Error("HTTP "+resp.status+" — "+(await resp.text()).slice(0,200));
     const data=await resp.json();
-    return data.choices&&data.choices[0]&&data.choices[0].message&&data.choices[0].message.content||"(empty response)";
+    var _c=data.choices&&data.choices[0]&&data.choices[0].message||{}; return _c.content||_c.reasoning_content||"(empty response)";
   };
   try{ return await call(); }
   catch(e){ if(String(e.message).indexOf("429")>=0){ await new Promise(r=>setTimeout(r,4000)); return await call(); } throw e; }
@@ -390,7 +391,7 @@ function toggleTheme(){
   if(saved)document.documentElement.dataset.theme=saved;
   else if(matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.dataset.theme="dark";
   $("engine").value = PROVIDERS[provider] ? provider : "pollinations";
-  addMsg("Ask me anything about California law. I search the <b>complete California Codes</b> — all 29 codes plus the Constitution, 162,324 sections — before answering, and cite what I used.\n\n<b>Sarvam AI is built in</b> — click ⚙ to paste your Sarvam key (dashboard.sarvam.ai) and it becomes the engine. No key? Switch the engine to “free (no key)” and ask away.","ai");
+  addMsg("Ask me anything about California law. I search the <b>complete California Codes</b> — all 29 codes plus the Constitution, 162,324 sections — before answering, and cite what I used.\n\n<b>Powered by Sarvam AI</b> (sarvam-105b-conversations) - built in and ready, no setup needed. Ask away.","ai");
   loadCorpus();
 })();
 </script>
