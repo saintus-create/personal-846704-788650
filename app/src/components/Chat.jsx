@@ -22,7 +22,7 @@ const EXAMPLES = [
   "What must a business do to comply with CCPA data-deletion requests?",
 ];
 
-const AI_MD_CLASSES = "text-sm [&_p]:leading-7 [&_li]:leading-relaxed [&_h4]:mt-3 [&_h4]:mb-1 [&_h4]:font-semibold " +
+const AI_MD_CLASSES = "text-[15px] [&_p]:leading-7 [&_li]:leading-relaxed [&_h4]:mt-3 [&_h4]:mb-1 [&_h4]:font-semibold " +
   "[&_ul]:my-2 [&_ol]:my-2 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5 [&_li]:my-1 " +
   "[&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_p]:my-2 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 " +
   "[&_table]:w-full [&_table]:my-3 [&_table]:text-xs [&_th]:border [&_th]:bg-muted [&_th]:px-2 [&_th]:py-1 [&_th]:text-left " +
@@ -235,24 +235,17 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
           {messages.map((m, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: "easeOut" }}
               className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""}`}>
-              {m.role === "ai" && (
-                <Avatar className="h-8 w-8 mt-1 border">
-                  <AvatarFallback className="bg-primary text-primary-foreground"><Scale className="h-4 w-4" /></AvatarFallback>
-                </Avatar>
-              )}
               <div className="max-w-[92%] sm:max-w-[85%]">
-                <Card className={`px-4 py-3 ${m.role === "user" ? "bg-primary text-primary-foreground border-transparent" : ""}`}>
-                  {m.role === "user" ? (
-                    <div className="text-sm whitespace-pre-wrap">{m.content}</div>
-                  ) : (
-                    <>
-                      <Html content={withCites(miniMd(m.content || ""))} className={AI_MD_CLASSES + (m.error ? " text-destructive whitespace-pre-wrap" : "")} onCite={handleCite(m)} />
-                      {m.streaming && <span className="inline-block w-2 h-4 bg-foreground/60 animate-pulse ml-0.5 align-middle rounded-sm" />}
-                    </>
-                  )}
-                </Card>
+                {m.role === "user" ? (
+                  <div className="bg-muted rounded-2xl rounded-br-md px-4 py-2.5 text-[15px] whitespace-pre-wrap">{m.content}</div>
+                ) : (
+                  <>
+                    <Html content={withCites(miniMd(m.content || ""))} className={AI_MD_CLASSES + (m.error ? " text-destructive whitespace-pre-wrap" : "")} onCite={handleCite(m)} />
+                    {m.streaming && <span className="inline-block w-2 h-4 bg-foreground/60 animate-pulse ml-0.5 align-middle rounded-sm" />}
+                  </>
+                )}
                 {m.role === "ai" && !m.streaming && !m.error && (
-                  <div className="flex gap-1 mt-1 ml-11">
+                  <div className="flex gap-1 mt-2">
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => copyMsg(m, i)} title="Copy">
                       {copied === i ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
                     </Button>
@@ -260,12 +253,12 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
                   </div>
                 )}
                 {m.role === "ai" && m.error && (
-                  <Button variant="outline" size="sm" className="ml-11 mt-2" onClick={() => askText(m.retry)}>
+                  <Button variant="outline" size="sm" className="mt-2" onClick={() => askText(m.retry)}>
                     <RefreshCw className="h-3.5 w-3.5" /> Retry
                   </Button>
                 )}
                 {m.sources && m.sources.length > 0 && (
-                  <div className="mt-2 ml-11 flex flex-wrap gap-1.5">
+                  <div className="mt-3 flex flex-wrap gap-1.5">
                     <span className="text-xs text-muted-foreground mr-1 self-center">Authorities:</span>
                     {m.sources.map((s, j) => s.url ? (
                       <a key={j} href={s.url} target="_blank" rel="noopener">
@@ -280,7 +273,7 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
                   </div>
                 )}
                 {m.followUps && m.followUps.length > 0 && !m.streaming && (
-                  <div className="mt-3 ml-11 flex flex-col gap-1.5 items-start">
+                  <div className="mt-3 flex flex-col gap-1.5 items-start">
                     <span className="text-xs text-muted-foreground">Keep digging:</span>
                     {m.followUps.map((f, j) => (
                       <button key={j} onClick={() => askText(f)}
@@ -296,7 +289,7 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
           <AnimatePresence>
             {status && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="flex items-center gap-2 text-muted-foreground text-sm pl-11">
+                className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 {status}
               </motion.div>
