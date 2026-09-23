@@ -137,7 +137,7 @@ export default function App() {
             </SelectTrigger>
             <SelectContent>
               {Object.entries(PROVIDERS).map(([k, p]) => (
-                <SelectItem key={k} value={k} className="text-xs">AI: {p.label}</SelectItem>
+                <SelectItem key={k} value={k} className="text-xs">{p.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -151,12 +151,12 @@ export default function App() {
           <div className="flex h-full">
             <div className="hidden lg:flex flex-col w-60 border-r shrink-0">
               <div className="p-3">
-                <Button onClick={() => { newChat(); }} variant="outline" className="w-full justify-start gap-2" disabled={busy}>
+                <Button onClick={() => { newChat(); }} variant="outline" size="sm" className="w-full justify-start gap-2 h-8" disabled={busy}>
                   <Plus className="h-4 w-4" /> New chat
                 </Button>
               </div>
               <ScrollArea className="flex-1 px-3 pb-3">
-                <div className="text-[11px] uppercase tracking-wider text-muted-foreground px-2 pb-2">History</div>
+                <div className="text-[11px] uppercase tracking-wider text-muted-foreground px-2 pt-3 pb-2">History</div>
                 <div className="flex flex-col gap-0.5">
                   {chats.length === 0 && (
                     <div className="text-xs text-muted-foreground px-2 py-4">No conversations yet. Your chats are saved in this browser.</div>
@@ -166,7 +166,7 @@ export default function App() {
                       className={"group w-full flex items-center gap-2 rounded-md px-2 py-2 text-left text-[13px] transition-colors disabled:opacity-50 " +
                         (c.id === activeId ? "bg-accent text-accent-foreground font-medium" : "hover:bg-accent/50")}>
                       <MessageSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{c.title}</span>
+                      <span className="truncate flex-1 min-w-0">{c.title}</span>
                       <Trash2 className="h-3.5 w-3.5 shrink-0 opacity-0 group-hover:opacity-100 hover:text-destructive"
                         onClick={(e) => deleteChat(e, c.id)} />
                     </button>

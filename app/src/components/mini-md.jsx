@@ -7,15 +7,24 @@ function esc(s) {
 
 function tables(h) {
   return h.split(/\n{2,}/).map((block) => {
-    const lines = block.split("\n").filter((l) => l.trim());
-    if (lines.length >= 2 && lines.every((l) => l.includes("|")) && /^\s*\|?[\s:|-]+\|?\s*$/.test(lines[1])) {
-      const cells = (l) => l.replace(/^\s*\|/, "").replace(/\|\s*$/, "").split("|").map((c) => c.trim());
-      const head = cells(lines[0]);
-      const rows = lines.slice(2).map(cells);
-      return "<table><thead><tr>" + head.map((c) => "<th>" + c + "</th>").join("") + "</tr></thead><tbody>" +
-        rows.map((r) => "<tr>" + head.map((_, i) => "<td>" + (r[i] || "") + "</td>").join("") + "</tr>").join("") + "</tbody></table>";
+    const lines = block.split("\n");
+    const out = [];
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+      const next = i + 1 < lines.length ? lines[i + 1] : "";
+      if (line.includes("|") && next.includes("-") && /^\s*\|?[\s:|-]+\|?\s*$/.test(next)) {
+        const cellsOf = (l) => l.replace(/^\s*\|/, "").replace(/\|\s*$/, "").split("|").map((c) => c.trim());
+        const head = cellsOf(line);
+        const rows = [];
+        let j = i + 2;
+        while (j < lines.length && lines[j].includes("|")) { rows.push(cellsOf(lines[j])); j++; }
+        out.push({ table: "<table><thead><tr>" + head.map((c) => "<th>" + c + "</th>").join("") + "</tr></thead><tbody>" +
+          rows.map((r) => "<tr>" + head.map((_, k) => "<td>" + (r[k] || "") + "</td>").join("") + "</tr>").join("") + "</tbody></table>" });
+        i = j;
+      } else { out.push({ line }); i++; }
     }
-    return block;
+    return out.map((x) => (x.table ? "\n\n" + x.table + "\n\n" : x.line)).join("\n");
   }).join("\n\n");
 }
 

@@ -60,7 +60,7 @@ export function loadCorpus(onProgress) {
     for (const d of m.datasets) {
       const c = { abbr: d.abbr, name: CODE_NAMES[d.abbr] || d.abbr + " Code", sections: d.sections, updated: d.updated_by_state };
       codes.push(c); byAbbr[c.abbr] = c;
-      onProgress && onProgress(`Loading the California Codes… ${codes.length}/${m.datasets.length} — ${c.name}`);
+      onProgress && onProgress(`Loading codes… ${codes.length}/${m.datasets.length}`);
       try {
         const res = await fetch("corpus/law/" + d.abbr + ".jsonl.gz");
         const ds = new DecompressionStream("gzip");

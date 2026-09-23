@@ -22,13 +22,13 @@ const EXAMPLES = [
   "What must a business do to comply with CCPA data-deletion requests?",
 ];
 
-const AI_MD_CLASSES = "text-sm leading-relaxed [&_h4]:mt-3 [&_h4]:mb-1 [&_h4]:font-semibold " +
+const AI_MD_CLASSES = "text-sm [&_p]:leading-7 [&_li]:leading-relaxed [&_h4]:mt-3 [&_h4]:mb-1 [&_h4]:font-semibold " +
   "[&_ul]:my-2 [&_ol]:my-2 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5 [&_li]:my-1 " +
   "[&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_p]:my-2 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 " +
   "[&_table]:w-full [&_table]:my-3 [&_table]:text-xs [&_th]:border [&_th]:bg-muted [&_th]:px-2 [&_th]:py-1 [&_th]:text-left " +
   "[&_td]:border [&_td]:px-2 [&_td]:py-1 [&_td]:align-top " +
   "[&_.cite-mark]:cursor-pointer [&_.cite-mark]:inline-flex [&_.cite-mark]:items-center [&_.cite-mark]:rounded " +
-  "[&_.cite-mark]:bg-muted [&_.cite-mark]:px-1 [&_.cite-mark]:mx-0.5 [&_.cite-mark]:text-[10px] [&_.cite-mark]:font-semibold " +
+  "[&_.cite-mark]:bg-muted [&_.cite-mark]:px-1 [&_.cite-mark]:text-[10px] [&_.cite-mark]:font-semibold [&_.cite-mark]:leading-none " +
   "[&_.cite-mark]:align-baseline hover:[&_.cite-mark]:bg-accent";
 
 export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCorpusStatus, onBusyChange }) {
@@ -211,7 +211,7 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
                   <h1 className="text-3xl sm:text-[2.75rem] font-semibold tracking-tight leading-tight">
                     California law, <span className="brand-color">answered.</span>
                   </h1>
-                  <p className="text-muted-foreground text-[15px] mt-4 max-w-md mx-auto leading-relaxed">
+                  <p className="text-muted-foreground text-[15px] mt-4 max-w-md mx-auto leading-7">
                     The complete California Codes (162,324 sections) plus retrieved judicial opinions,
                     reasoned through and cited. Ask anything, or start here:
                   </p>
@@ -309,7 +309,7 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
         <form onSubmit={ask} className="max-w-3xl mx-auto">
           <div className="flex gap-2">
             <Input value={input} onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask anything about California law - or anything else…"
+              placeholder="Ask anything about California law…"
               className="h-11 rounded-xl text-[15px]" />
             <Button type="submit" size="icon" className="h-11 w-11 rounded-xl shrink-0" disabled={!!status}><ArrowUp /></Button>
           </div>
