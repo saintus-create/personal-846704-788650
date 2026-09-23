@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
-import { ChevronRight, ChevronsDownUp, ChevronsUpDown, Search } from "lucide-react";
+import { ChevronRight, ChevronsDownUp, ChevronsUpDown, Search, ExternalLink, Database, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { loadCorpus, corpusReady, codes, byAbbr, buildUnits } from "@/lib/engine";
+import { loadCorpus, corpusReady, codes, byAbbr, buildUnits, searchSections } from "@/lib/engine";
 
 function SectionBlock({ s, abbr, filter }) {
   const cite = s.citation || (abbr + " \u00A7 " + s.section);
@@ -52,6 +52,9 @@ function UnitBlock({ u, filter }) {
 export default function Browser({ activeCode, jumpSection, onCodeChange }) {
   const [units, setUnits] = useState(null);
   const [filter, setFilter] = useState("");
+  const [globalQuery, setGlobalQuery] = useState("");
+  const [globalResults, setGlobalResults] = useState([]);
+  const [globalBusy, setGlobalBusy] = useState(false);
   const boxRef = useRef(null);
 
   useEffect(() => {
@@ -84,6 +87,17 @@ export default function Browser({ activeCode, jumpSection, onCodeChange }) {
     if (boxRef.current) boxRef.current.querySelectorAll("details").forEach((d) => { d.open = open; });
   };
 
+  const runGlobalSearch = async (e) => {
+    e.preventDefault();
+    const q = globalQuery.trim();
+    if (!q) return;
+    setGlobalBusy(true);
+    try {
+      if (!corpusReady) await loadCorpus();
+      setGlobalResults(searchSections([q], [], 12));
+    } finally { setGlobalBusy(false); }
+  };
+
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto" ref={boxRef}>
       <div className="md:hidden mb-4">
@@ -96,11 +110,25 @@ export default function Browser({ activeCode, jumpSection, onCodeChange }) {
       </div>
       {!activeCode ? (
         <div>
-          <h1 className="text-2xl font-bold mb-2">Browse Codes</h1>
+          <div className="eyebrow"><Database className="h-3.5 w-3.5" /> Primary law library</div>
+          <h1 className="text-2xl font-bold mb-2 mt-3">Browse Codes</h1>
           <p className="text-muted-foreground text-sm">
             The complete California Codes - every section, readable in place. Pick a code to start
             {window.innerWidth >= 768 ? " from the left" : " above"}.
           </p>
+          <div className="grid sm:grid-cols-3 gap-3 mt-6">
+            {[
+              ["30", "codes and Constitution", "Local corpus"],
+              ["162k+", "indexed sections", "Searchable text"],
+              ["Live", "official source link", "Verify before relying"],
+            ].map(([value, label, note]) => <div key={label} className="metric-card"><div className="text-xl font-semibold tracking-tight">{value}</div><div className="text-xs font-medium mt-1">{label}</div><div className="text-[11px] text-muted-foreground mt-1">{note}</div></div>)}
+          </div>
+          <form onSubmit={runGlobalSearch} className="mt-6 flex gap-2">
+            <div className="relative flex-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input value={globalQuery} onChange={(e) => setGlobalQuery(e.target.value)} placeholder="Search across all California Codes…" className="pl-9 h-11" /></div>
+            <Button type="submit" className="h-11" disabled={globalBusy}>{globalBusy ? "Searching…" : "Search"}</Button>
+          </form>
+          {globalResults.length > 0 && <div className="mt-4 rounded-xl border divide-y overflow-hidden">{globalResults.map((x, i) => <button key={i} onClick={() => { onCodeChange(x.abbr); setGlobalQuery(""); setGlobalResults([]); }} className="w-full text-left p-3 hover:bg-muted/40 transition-colors"><div className="text-sm font-semibold">{x.r.citation || `${x.abbr} § ${x.r.section}`}</div><div className="text-xs text-muted-foreground mt-1 line-clamp-2">{x.r.text}</div><div className="text-[11px] text-muted-foreground mt-2">{byAbbr[x.abbr]?.name}</div></button>)}</div>}
+          <div className="mt-6 rounded-xl border bg-muted/20 p-4 text-sm flex items-start gap-3"><ShieldCheck className="h-4 w-4 mt-0.5 text-emerald-600 shrink-0" /><span className="text-muted-foreground">This is a dated research snapshot. Use the official California Legislative Information site for the current operative text.</span></div>
         </div>
       ) : (
         <>
@@ -109,6 +137,7 @@ export default function Browser({ activeCode, jumpSection, onCodeChange }) {
           <p className="text-sm text-muted-foreground mt-1 mb-4">
             <b>{byAbbr[activeCode].sections.toLocaleString()} sections</b> · snapshot updated by source: {byAbbr[activeCode].updated}
           </p>
+          <a href="https://leginfo.legislature.ca.gov/" target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-4">Verify current text at official LegInfo <ExternalLink className="h-3 w-3" /></a>
           {units && (
             <div className="flex flex-col sm:flex-row gap-2 mb-4">
               <div className="relative flex-1">

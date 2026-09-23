@@ -4,79 +4,85 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --primary: 240 5.9% 10%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 4% 42%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
+    --background: 40 20% 98%;
+    --foreground: 224 28% 13%;
+    --card: 40 33% 99%;
+    --card-foreground: 224 28% 13%;
+    --primary: 224 56% 25%;
+    --primary-foreground: 40 30% 98%;
+    --secondary: 40 14% 94%;
+    --secondary-foreground: 224 28% 18%;
+    --muted: 40 12% 94%;
+    --muted-foreground: 220 10% 43%;
+    --accent: 40 18% 91%;
+    --accent-foreground: 224 28% 13%;
+    --destructive: 0 72% 49%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5.9% 10%;
-    --radius: 0.625rem;
-    --brand: 221 83% 53%;
-    --brand-2: 262 83% 58%;
+    --border: 38 13% 87%;
+    --input: 38 13% 84%;
+    --ring: 224 56% 25%;
+    --radius: 0.75rem;
+    --brand: 224 56% 25%;
+    --brand-2: 40 72% 46%;
   }
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 6% 6%;
-    --card-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --background: 224 28% 9%;
+    --foreground: 40 24% 96%;
+    --card: 224 25% 12%;
+    --card-foreground: 40 24% 96%;
+    --primary: 40 72% 62%;
+    --primary-foreground: 224 28% 10%;
+    --secondary: 224 20% 16%;
+    --secondary-foreground: 40 24% 96%;
+    --muted: 224 20% 16%;
+    --muted-foreground: 220 10% 67%;
+    --accent: 224 20% 19%;
+    --accent-foreground: 40 24% 96%;
+    --border: 224 16% 22%;
+    --input: 224 16% 24%;
+    --ring: 40 72% 62%;
+    --brand: 40 72% 62%;
+    --brand-2: 40 72% 62%;
   }
 }
 
 @layer base {
   * { @apply border-border; }
   html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
-  body {
-    @apply bg-background text-foreground;
-    font-family: "Inter Variable", -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  }
-  ::selection { background: hsl(var(--brand) / 0.22); }
+  body { @apply bg-background text-foreground; font-family: "Inter Variable", -apple-system, "Segoe UI", sans-serif; font-feature-settings: "cv02", "cv03", "cv04", "cv11"; }
+  ::selection { background: hsl(var(--brand) / 0.18); }
   *::-webkit-scrollbar { width: 8px; height: 8px; }
   *::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 9999px; }
   *::-webkit-scrollbar-track { background: transparent; }
+  button { transition: transform 140ms ease-out, background-color 140ms ease-out, border-color 140ms ease-out, color 140ms ease-out; }
+  button:not(:disabled):active { transform: scale(0.98); }
 }
 
 @layer utilities {
   .brand-color { color: hsl(var(--brand)); }
-
-  /* barely-there grid backdrop */
-  .bg-grid {
-    background-image:
-      linear-gradient(hsl(var(--border) / 0.35) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--border) / 0.35) 1px, transparent 1px);
-    background-size: 40px 40px;
-    -webkit-mask-image: radial-gradient(ellipse 70% 55% at 50% 30%, black 20%, transparent 70%);
-    mask-image: radial-gradient(ellipse 70% 55% at 50% 30%, black 20%, transparent 70%);
-  }
-
-  /* restrained card hover */
-  .card-lift { transition: transform 160ms cubic-bezier(0.2, 0, 0, 1), border-color 160ms, background-color 160ms; }
-  .card-lift:hover {
-    transform: translateY(-1px);
-    border-color: hsl(var(--foreground) / 0.18);
-  }
+  .brand-mark { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 9px; color: hsl(var(--primary-foreground)); background: hsl(var(--brand)); box-shadow: 0 2px 6px hsl(var(--brand) / 0.2); }
+  .app-shell { background: radial-gradient(circle at 50% -15%, hsl(var(--brand) / 0.06), transparent 34rem); }
+  .app-header { box-shadow: 0 1px 0 hsl(var(--border) / 0.45); }
+  .status-badge { background: hsl(var(--card) / 0.7); }
+  .bg-grid { background-image: linear-gradient(hsl(var(--border) / 0.48) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.48) 1px, transparent 1px); background-size: 34px 34px; -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 30%, black 16%, transparent 78%); mask-image: radial-gradient(ellipse 75% 70% at 50% 30%, black 16%, transparent 78%); }
+  .source-chip { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid hsl(var(--border)); background: hsl(var(--card) / 0.78); color: hsl(var(--muted-foreground)); border-radius: 999px; padding: 0.38rem 0.68rem; font-size: 0.72rem; font-weight: 500; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 0.45rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.17em; font-size: 0.68rem; font-weight: 700; }
+  .metric-card { border: 1px solid hsl(var(--border)); border-radius: 0.85rem; padding: 0.95rem; background: hsl(var(--card) / 0.62); }
+  .card-lift { transition: transform 160ms cubic-bezier(0.2, 0, 0, 1), border-color 160ms, background-color 160ms, box-shadow 160ms; }
+  .card-lift:hover { transform: translateY(-2px); border-color: hsl(var(--foreground) / 0.18); box-shadow: 0 10px 26px hsl(var(--foreground) / 0.06); background: hsl(var(--card)); }
 }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
+@media (max-width: 640px) { .app-shell { background: hsl(var(--background)); } }
+
+@layer components {
+  .container { width: 100%; margin-left: auto; margin-right: auto; padding-left: 1rem; padding-right: 1rem; }
+  .flex { min-height: 0; min-width: 0; }
+  @media (min-width: 640px) { .container { padding-left: 1.5rem; padding-right: 1.5rem; } }
+  @media (min-width: 1024px) { .container { padding-left: 2rem; padding-right: 2rem; max-width: 1280px; } }
+}
+
+/* Keeps long authorities readable without changing their source text. */
+.prose-authority { max-width: 72ch; }
+.prose-authority p { line-height: 1.8; }
+.prose-authority h3 { letter-spacing: -0.02em; }

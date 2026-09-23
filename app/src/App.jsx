@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Scale, Settings, Sun, Moon, Plus, MessageSquare, Trash2 } from "lucide-react";
+import { Scale, Settings, Sun, Moon, Plus, MessageSquare, Trash2, ExternalLink, ShieldCheck, BookOpen, Gavel } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,12 +104,12 @@ export default function App() {
   const activeChat = chats.find((c) => c.id === activeId) || null;
 
   return (
-    <div className="h-screen flex flex-col">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 sticky top-0 z-40">
+    <div className="h-screen flex flex-col app-shell">
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 sticky top-0 z-40 app-header">
         <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-14">
-          <div className="flex items-center gap-2 font-bold cursor-pointer select-none shrink-0" onClick={() => setTab("ai")}>
-            <Scale className="h-5 w-5 brand-color" />
-            <span className="hidden sm:inline">CA <span className="brand-color">Leg Info</span></span>
+          <div className="flex items-center gap-2.5 font-semibold cursor-pointer select-none shrink-0" onClick={() => setTab("ai")}>
+            <span className="brand-mark"><Scale className="h-4 w-4" /></span>
+            <span className="hidden sm:inline tracking-tight">CA <span className="brand-color">Leg Info</span></span>
           </div>
           <Tabs value={tab} onValueChange={setTab} className="ml-1">
             <TabsList>
@@ -120,7 +120,7 @@ export default function App() {
           <div className="flex-1" />
           {tab === "ai" && (
             <div className="hidden sm:block">
-              <Badge variant="outline" className="font-normal text-muted-foreground max-w-[240px] truncate">
+              <Badge variant="outline" className="font-normal text-muted-foreground max-w-[240px] truncate status-badge">
                 {corpusStatus === "ready" ? "\u2713 162,324 sections loaded" :
                  corpusStatus === "error" ? "corpus unavailable" : corpusStatus}
               </Badge>
@@ -144,6 +144,15 @@ export default function App() {
           <Button variant="ghost" size="icon" onClick={openSettings} title="AI settings"><Settings className="h-4 w-4" /></Button>
           <Button variant="ghost" size="icon" onClick={toggleTheme} title="Theme">{dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}</Button>
         </div>
+        <div className="source-strip hidden lg:flex items-center gap-4 px-4 h-8 text-[11px] text-muted-foreground border-t bg-muted/20">
+          <span className="inline-flex items-center gap-1.5 font-medium text-foreground/70"><ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> Source-aware research</span>
+          <span className="text-border">|</span>
+          <span>Primary law first</span>
+          <span>Judicial opinions when available</span>
+          <span className="flex-1" />
+          <a href="https://leginfo.legislature.ca.gov/" target="_blank" rel="noopener" className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Official LegInfo <ExternalLink className="h-3 w-3" /></a>
+          <a href="https://www.courtlistener.com/" target="_blank" rel="noopener" className="inline-flex items-center gap-1 hover:text-foreground transition-colors">CourtListener <ExternalLink className="h-3 w-3" /></a>
+        </div>
       </header>
 
       <div className="flex-1 overflow-hidden">
@@ -154,6 +163,10 @@ export default function App() {
                 <Button onClick={() => { newChat(); }} variant="outline" size="sm" className="w-full justify-start gap-2 h-8" disabled={busy}>
                   <Plus className="h-4 w-4" /> New chat
                 </Button>
+              </div>
+              <div className="mx-3 mb-2 rounded-xl border bg-muted/20 p-3">
+                <div className="flex items-center gap-2 text-xs font-semibold"><BookOpen className="h-3.5 w-3.5 brand-color" /> Research desk</div>
+                <p className="mt-1.5 text-[11px] leading-5 text-muted-foreground">Ask in plain English. Answers are grounded in the local California Codes corpus and linked authorities.</p>
               </div>
               <ScrollArea className="flex-1 px-3 pb-3">
                 <div className="text-[11px] uppercase tracking-wider text-muted-foreground px-2 pt-3 pb-2">History</div>
@@ -183,7 +196,7 @@ export default function App() {
           <div className="flex h-full">
             <div className="hidden md:block w-64 border-r shrink-0">
               <div className="p-3 overflow-y-auto h-full">
-                <div className="text-[11px] uppercase tracking-wider text-muted-foreground px-2 pb-2">California Codes</div>
+                <div className="flex items-center gap-2 px-2 pb-2 text-[11px] uppercase tracking-wider text-muted-foreground"><Gavel className="h-3.5 w-3.5" /> California Codes</div>
                 {codes.map((c) => (
                   <button key={c.abbr} onClick={() => { setActiveCode(c.abbr); setJumpSection(null); }}
                     className={"w-full flex justify-between items-center gap-2 rounded-md px-2 py-1.5 text-[13px] text-left transition-colors " +
