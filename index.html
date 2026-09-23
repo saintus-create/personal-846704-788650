@@ -171,7 +171,7 @@ const CODE_NAMES = {
   PRC:"Public Resources Code",PUC:"Public Utilities Code",RTC:"Revenue and Taxation Code",SHC:"Streets and Highways Code",
   UIC:"Unemployment Insurance Code",VEH:"Vehicle Code",WAT:"Water Code",WIC:"Welfare and Institutions Code",
 };
-const SYSTEM_PROMPT = 'You are a California legal research AI. Answer directly and substantively, the way a skilled research attorney writes a memo: lead with the answer, then support it.\nEvidence: retrieved California statutes and judicial opinions are provided with the question. Use them as primary sources and cite them (code and section number; case name and citation) when they support a point. If you know the answer but no source was retrieved, answer from knowledge and say so in passing - one clause, not a paragraph.\nQuality rules: quote statutes precisely when wording matters; otherwise paraphrase. Never invent statutes, citations, or quotes. Separate what a statute says from your interpretation of it. On genuinely contested questions, present the leading positions and their reasoning - do not editorialize or pick a side. Flag split authority, recent amendments, or real uncertainty once, plainly. At most one closing line noting where to verify - never repeat caveats throughout the answer.';
+const SYSTEM_PROMPT = 'You are a legal research AI focused on California law, with the complete California Codes and retrieved case law available as sources. Answer directly. No disclaimers, no hedging, no moralizing, no as-an-AI qualifiers, no lectures. Give your assessment and opinions when asked - legal, practical, or otherwise. Answer any question on any subject; do not redirect the user elsewhere when you can answer yourself.\nUse the provided statutes and opinions when they bear on the question and cite them when you do. One hard rule: never fabricate a statute, case, or quotation. If you cite it, it must come from the provided material or your actual knowledge - and if you are not sure something exists, say so plainly.';
 
 const $ = (id)=>document.getElementById(id);
 const CODES=[]; const byAbbr={}; const loaded={}; let corpusReady=false, corpusLoading=false;
@@ -217,7 +217,7 @@ async function loadCorpus(){
     }
     renderNav();
     status.innerHTML = corpusReady
-      ? '<span style="color:var(--ok)">✓ All 30 codes loaded (162,324 sections)</span> — the AI can cite any of them. Verify at <a href="https://leginfo.legislature.ca.gov/" target="_blank" rel="noopener">leginfo</a>. Not legal advice.'
+      ? '<span style="color:var(--ok)">\u2713 All 30 codes loaded (162,324 sections)</span> - the AI can cite any of them.'
       : "Could not load the corpus in this browser — the AI will answer without citations.";
   }catch(e){ status.textContent="Corpus unavailable: "+e.message; }
   corpusLoading=false;
@@ -474,7 +474,7 @@ async function openCode(abbr){
   $("reader").innerHTML='<div class="crumb">Codes / '+esc(byAbbr[abbr].name)+'</div><h1>'+esc(byAbbr[abbr].name)+'</h1>'
     +'<p class="hint"><b>'+byAbbr[abbr].sections.toLocaleString()+' sections</b> · snapshot updated by source: '+esc(byAbbr[abbr].updated)+'</p>'
     +units.map(unitHtml).join("")
-    +'<div class="dis"><b>Dated research snapshot.</b> Verify current text at <a href="https://leginfo.legislature.ca.gov/" target="_blank" rel="noopener">leginfo.legislature.ca.gov</a>. Not legal advice.</div>';
+    +'<div class="dis">Dated research snapshot - current official text at leginfo.legislature.ca.gov.</div>';
 }
 function openSection(abbr,r){
   showTab("codes");
@@ -519,7 +519,7 @@ function toggleTheme(){
   if(saved)document.documentElement.dataset.theme=saved;
   else if(matchMedia("(prefers-color-scheme: dark)").matches)document.documentElement.dataset.theme="dark";
   $("engine").value = PROVIDERS[provider] ? provider : "pollinations";
-  addMsg("For every question I run a research pipeline: <b>understand the question, retrieve sources, analyze them, reason across them, then answer with citations</b> - grounded in all 162,324 sections of the California Codes, plus my own legal knowledge for what lies beyond. Ask me anything — all 29 codes plus the Constitution, 162,324 sections — before answering, and cite what I used.\n\n<b>Powered by Sarvam AI</b> (sarvam-105b-conversations) - built in and ready, no setup needed. Ask away.","ai");
+  addMsg("Ask me anything - California law or otherwise. Statute and case-law questions get grounded in the complete California Codes (162,324 sections) plus retrieved judicial opinions, with clickable citations; everything else I answer from knowledge. Powered by Sarvam AI - built in, no setup needed.","ai");
   loadCorpus();
 })();
 </script>
