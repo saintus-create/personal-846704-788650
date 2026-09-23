@@ -25,8 +25,8 @@ const EXAMPLES = [
 const AI_MD_CLASSES = "text-[15px] [&_p]:leading-7 [&_li]:leading-relaxed [&_h4]:mt-3 [&_h4]:mb-1 [&_h4]:font-semibold " +
   "[&_ul]:my-2 [&_ol]:my-2 [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5 [&_li]:my-1 " +
   "[&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_p]:my-2 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 " +
-  "[&_table]:w-full [&_table]:my-3 [&_table]:text-xs [&_th]:border [&_th]:bg-muted [&_th]:px-2 [&_th]:py-1 [&_th]:text-left " +
-  "[&_td]:border [&_td]:px-2 [&_td]:py-1 [&_td]:align-top " +
+  "[&_table]:w-full [&_table]:my-3 [&_table]:text-[13px] [&_th]:border-b [&_th]:border-border [&_th]:bg-transparent [&_th]:px-2 [&_th]:py-1 [&_th]:text-left " +
+  "[&_td]:border-b [&_td]:border-border/60 [&_td]:px-2 [&_td]:py-1.5 [&_td]:align-top " +
   "[&_.cite-mark]:cursor-pointer [&_.cite-mark]:inline-flex [&_.cite-mark]:items-center [&_.cite-mark]:rounded " +
   "[&_.cite-mark]:bg-muted [&_.cite-mark]:px-1 [&_.cite-mark]:text-[10px] [&_.cite-mark]:font-semibold [&_.cite-mark]:leading-none " +
   "[&_.cite-mark]:align-baseline hover:[&_.cite-mark]:bg-accent";
