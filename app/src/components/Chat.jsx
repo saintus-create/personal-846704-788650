@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowUp, Scale, Loader2, ExternalLink, Copy, Check, Download, RefreshCw, Zap, FileText, Gavel, Sparkles } from "lucide-react";
+import { ArrowUp, Scale, Loader2, ExternalLink, Copy, Check, Download, RefreshCw, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -202,13 +202,12 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
         <div className="max-w-3xl mx-auto flex flex-col gap-5">
           {messages.length === 0 && (
             <div className="pt-6 sm:pt-12 pb-4">
-              <div className="relative overflow-hidden rounded-3xl border bg-card/40 px-6 py-14 sm:py-20 text-center">
+              <div className="relative overflow-hidden rounded-3xl px-6 py-14 sm:py-20 text-center empty-hero">
                 <div className="absolute inset-0 bg-grid" />
                 <div className="relative">
-                  <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl border bg-card mb-5 shadow-sm">
+                  <div className="inline-flex items-center justify-center h-10 w-10 rounded-xl border bg-card mb-5">
                     <Scale className="h-5 w-5 brand-color" />
                   </div>
-                  <div className="flex items-center justify-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground font-semibold mb-3"><Sparkles className="h-3.5 w-3.5 brand-color" /> California research desk</div>
                   <h1 className="text-3xl sm:text-[2.75rem] font-semibold tracking-tight leading-tight">
                     California law, <span className="brand-color">answered.</span>
                   </h1>
@@ -216,11 +215,6 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
                     The complete California Codes (162,324 sections) plus retrieved judicial opinions,
                     reasoned through and cited. Ask anything, or start here:
                   </p>
-                  <div className="flex flex-wrap justify-center gap-2 mt-6">
-                    <span className="source-chip"><FileText className="h-3.5 w-3.5" /> Statutes</span>
-                    <span className="source-chip"><Gavel className="h-3.5 w-3.5" /> Opinions</span>
-                    <span className="source-chip">Inline citations</span>
-                  </div>
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-3 mt-6 text-left">

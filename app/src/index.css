@@ -61,10 +61,11 @@
 @layer utilities {
   .brand-color { color: hsl(var(--brand)); }
   .brand-mark { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 9px; color: hsl(var(--primary-foreground)); background: hsl(var(--brand)); box-shadow: 0 2px 6px hsl(var(--brand) / 0.2); }
-  .app-shell { background: radial-gradient(circle at 50% -15%, hsl(var(--brand) / 0.06), transparent 34rem); }
+  .app-shell { background: radial-gradient(circle at 50% -15%, hsl(var(--brand) / 0.035), transparent 34rem); }
   .app-header { box-shadow: 0 1px 0 hsl(var(--border) / 0.45); }
   .status-badge { background: hsl(var(--card) / 0.7); }
   .bg-grid { background-image: linear-gradient(hsl(var(--border) / 0.48) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--border) / 0.48) 1px, transparent 1px); background-size: 34px 34px; -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 30%, black 16%, transparent 78%); mask-image: radial-gradient(ellipse 75% 70% at 50% 30%, black 16%, transparent 78%); }
+  .empty-hero .bg-grid { opacity: 0.38; }
   .source-chip { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid hsl(var(--border)); background: hsl(var(--card) / 0.78); color: hsl(var(--muted-foreground)); border-radius: 999px; padding: 0.38rem 0.68rem; font-size: 0.72rem; font-weight: 500; }
   .eyebrow { display: inline-flex; align-items: center; gap: 0.45rem; color: hsl(var(--muted-foreground)); text-transform: uppercase; letter-spacing: 0.17em; font-size: 0.68rem; font-weight: 700; }
   .metric-card { border: 1px solid hsl(var(--border)); border-radius: 0.85rem; padding: 0.95rem; background: hsl(var(--card) / 0.62); }

@@ -69,9 +69,9 @@ export function loadCorpus(onProgress) {
         for (const line of text.split("\n")) { if (line.trim()) { try { recs.push(JSON.parse(line)); } catch (e) {} } }
         recs.sort((a, b) => (a.ordinal || 0) - (b.ordinal || 0));
         loaded[d.abbr] = recs;
-        corpusReady = true;
       } catch (e) { console.error(d.abbr, e); }
     }
+    corpusReady = m.datasets.every((d) => Array.isArray(loaded[d.abbr]));
     return corpusReady;
   })();
   corpusLoading.finally(() => { corpusLoading = null; });
@@ -89,13 +89,19 @@ export function searchSections(queries, codePriority, limit = 24) {
     for (const r of loaded[abbr]) {
       if (r.kind !== "section" || !r.text) continue;
       const hay = ((r.citation || "") + " " + r.text).toLowerCase();
+      const citation = (r.citation || "").toLowerCase();
       let score = 0;
       for (const q of qsets) {
-        if (q.raw.length > 3 && hay.includes(q.raw)) score += 30;
-        for (const t of q.terms) { if (hay.includes(t)) score += t.length; }
+        if (q.raw.length > 3 && hay.includes(q.raw)) score += 36;
+        for (const t of q.terms) {
+          if (citation.includes(t)) score += 12;
+          else if (hay.includes(" " + t + " ")) score += Math.min(10, t.length + 3);
+          else if (hay.includes(t)) score += Math.min(5, t.length);
+        }
       }
       if (score > 0) {
         if (codePriority && codePriority.includes(abbr)) score += 25;
+        if (r.repealed) score -= 8;
         out.push({ abbr, r, score });
       }
     }
