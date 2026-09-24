@@ -45,11 +45,13 @@ export function miniMd(md) {
   ).join("");
 }
 
-// turn [3] / [c2] citation markers into clickable superscripts
+// turn [3] / [c2] / [b1] / [r1] citation markers into clickable superscripts
 export function withCites(html) {
   return String(html)
-    .replace(/\[\s*c(\d+)\s*\]/gi, '<sup class="cite-mark" data-cite="c$1">\u0026nbsp;#c$1</sup>')
-    .replace(/\[\s*(\d{1,2})\s*\]/g, '<sup class="cite-mark" data-cite="$1">#$1</sup>');
+    .replace(/\[\s*([a-z]{0,2})(\d{1,2})\s*\]/gi, (m, p, n) => {
+      const key = (p ? p.toLowerCase() : "") + n;
+      return '<sup class="cite-mark" data-cite="' + key + '">\u0026nbsp;#' + key + '</sup>';
+    });
 }
 
 export function Html({ content, className, onCite }) {

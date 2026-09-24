@@ -8,16 +8,19 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { miniMd, withCites, Html } from "@/components/mini-md";
 import {
-  loadCorpus, corpusReady, planQuestion, searchSections, analyzeSections, searchCaseLaw,
+  loadCorpus, loadExtras, corpusReady, extras, corpusStats, planQuestion, searchSections, analyzeSections,
+  searchCaseLaw, searchBills, searchRules, famCasesFor,
   llm, llmStream, suggestFollowUps, SYSTEM_PROMPT, store,
 } from "@/lib/engine";
 
 const EXAMPLES = [
   { q: "What's the difference between burglary and robbery in California?", label: "Burglary vs. robbery" },
+  { q: "What did the Legislature pass in the 2025-26 session about insurance and wildfire risk?", label: "2025-26 wildfire bills" },
   { q: "What is the statute of limitations for personal injury in California?", label: "PI statute of limitations" },
+  { q: "What do the California Rules of Court require for a request to continue a trial date?", label: "Continuance rules" },
   { q: "When can a landlord enter a tenant's unit, and what are the penalties for violating it?", label: "Landlord entry rules" },
+  { q: "How does California law define coercive control in domestic violence cases?", label: "Coercive control" },
   { q: "What are the exceptions to at-will employment in California?", label: "At-will exceptions" },
-  { q: "How does California define self-defense in criminal cases?", label: "Self-defense in CA" },
   { q: "What must a business do to comply with CCPA data-deletion requests?", label: "CCPA deletion rules" },
 ];
 
@@ -120,11 +123,18 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
           stepSet("Analyzing sections", used.length + " most relevant kept", true);
         } else used = candidates;
       }
-      stepSet("Searching judicial opinions", "CourtListener · precedential", false);
+      stepSet("Searching bills, rules & opinions", "2025-26 session · Rules of Court · CourtListener", false);
+      let bills = [], rules = [];
+      if (corpusReady) {
+        try { await loadExtras(); } catch (e) {}
+        bills = searchBills(plan.queries, 6);
+        rules = searchRules(plan.queries, 5);
+      }
       const cases = corpusReady ? await searchCaseLaw(plan.queries) : [];
-      stepSet("Searching judicial opinions", cases.length + " opinions found", true);
+      stepSet("Searching bills, rules & opinions",
+        cases.length + " opinions · " + bills.length + " bills · " + rules.length + " rules", true);
 
-      stepSet("Reasoning", (used.length + cases.length) + " sources", true);
+      stepSet("Reasoning", (used.length + cases.length + bills.length + rules.length) + " sources", true);
       stepSet("Drafting the answer", "streaming", false);
       let context = used.length
         ? "Retrieved sections from the California Codes corpus (statute sources, labeled [1], [2], ...):\n\n" +
@@ -135,12 +145,42 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
               (x.r.history ? "\nLegislative history: " + String(x.r.history).slice(0, 220) : "");
           }).join("\n\n")
         : "Note: no California statutes were retrieved for this question.";
+      if (bills.length) {
+        context += "\n\nLegislative measures from the 2025-2026 session catalog (bill sources, labeled [b1], [b2], ... - status shows where each measure stands; only chaptered measures are law):\n\n" +
+          bills.map((b, i) =>
+            "[b" + (i + 1) + "] " + b.measure + " (" + b.type + ", " + b.chamber + ") - author: " + (b.author || "unknown") +
+            " - status: " + (b.status || b.group || "unknown") +
+            (b.subject ? "\nSubject: " + b.subject : "") +
+            (b.url ? "\nOfficial text: " + b.url : "")).join("\n\n");
+      }
+      if (rules.length) {
+        context += "\n\nCalifornia Rules of Court (rule sources, labeled [r1], [r2], ...):\n\n" +
+          rules.map((r, i) =>
+            "[r" + (i + 1) + "] Cal. Rules of Court, rule " + r.rule + (r.rule_title ? " - " + r.rule_title : "") + "\n" +
+            String(r.text || "").slice(0, 1200) +
+            (r.history ? "\nHistory: " + String(r.history).slice(0, 180) : "")).join("\n\n");
+      }
       if (cases.length) {
         context += "\n\nRetrieved judicial opinions (case sources, labeled [c1], [c2], ... - via CourtListener):\n\n" +
           cases.map((x, i) => "[c" + (i + 1) + "] " + x.caseName + " (" + x.cite + (x.date ? ", " + x.date : "") + ")\n" + x.snippet).join("\n\n");
       }
+      if (extras.famCases) {
+        const notes = [];
+        used.forEach((x, i) => {
+          if (x.abbr !== "FAM" || !x.r.section) return;
+          const d = famCasesFor(x.r.section);
+          const list = (d && d.exact) || [];
+          if (!list.length) return;
+          const cite = x.r.citation || ("FAM \u00A7 " + x.r.section);
+          notes.push("For [" + (i + 1) + "] " + cite + ": " + list.slice(0, 3).map((c) =>
+            c.name + " (" + c.year + ") " + c.cite + " - " + String(c.desc || "").slice(0, 240)).join(" | "));
+        });
+        if (notes.length) context += "\n\nCurated appellate case annotations for retrieved Family Code sections (cite them with the statute's marker):\n" + notes.join("\n");
+      }
       let prompt = context +
-        ((used.length || cases.length) ? "\n\nCite the sources you rely on inline using their exact bracketed markers, like [3] or [c2], placed right after the sentence each supports." : "") +
+        ((used.length || cases.length || bills.length || rules.length)
+          ? "\n\nCite the sources you rely on inline using their exact bracketed markers, like [3], [c2], [b1] or [r1], placed right after the sentence each supports."
+          : "") +
         "\n\nQuestion: " + q;
       if (plan.subquestions && plan.subquestions.length) prompt += "\n\nSub-questions to cover: " + plan.subquestions.join(" | ");
 
@@ -167,13 +207,23 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
 
       const sources = used.map((x, i) => ({
         n: i + 1, label: x.r.citation || (x.abbr + " \u00A7 " + x.r.section), abbr: x.abbr, section: x.r.section,
-      })).concat(cases.map((x, i) => ({ n: "c" + (i + 1), label: x.caseName + (x.cite ? " (" + x.cite + ")" : ""), url: x.url })));
-      const markers = answer.match(/\[\s*(?:c)?\d+\s*\]/gi) || [];
+      }))
+        .concat(cases.map((x, i) => ({ n: "c" + (i + 1), label: x.caseName + (x.cite ? " (" + x.cite + ")" : ""), url: x.url })))
+        .concat(bills.map((b, i) => ({
+          n: "b" + (i + 1),
+          label: b.measure + (b.group ? " \u00B7 " + b.group : "") + (b.subject ? " \u2014 " + b.subject.slice(0, 48) : ""),
+          url: b.url,
+        })))
+        .concat(rules.map((r, i) => ({
+          n: "r" + (i + 1), label: "CRC rule " + r.rule + (r.rule_title ? " \u2014 " + r.rule_title.slice(0, 40) : ""),
+          go: { tab: "rules", rule: String(r.rule) },
+        })));
+      const markers = answer.match(/\[\s*[a-z]{0,2}\d{1,2}\s*\]/gi) || [];
       const matched = markers.filter((mk) => {
         const v = mk.replace(/[\[\]\s]/g, "").toLowerCase();
         return sources.some((x) => String(x.n).toLowerCase() === v);
       }).length;
-      const verified = (used.length || cases.length) && markers.length
+      const verified = (used.length || cases.length || bills.length || rules.length) && markers.length
         ? markers.length + " citations \u00B7 " + matched + " matched to retrieved sources" : "";
       update(aiIdx, { role: "ai", content: answer, sources, prompt: prompt, question: q, verified });
       persist();
@@ -214,8 +264,9 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
   const handleCite = (m) => (cite) => {
     const s = (m.sources || []).find((x) => String(x.n) === String(cite));
     if (!s) return;
-    if (s.url) window.open(s.url, "_blank");
-    else onJump && onJump(s.abbr, s.section);
+    if (s.go) onJump && onJump(s.go);
+    else if (s.url) window.open(s.url, "_blank");
+    else onJump && onJump({ tab: "codes", abbr: s.abbr, section: s.section });
   };
 
   const inputBar = (
@@ -239,6 +290,7 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
   );
 
   if (messages.length === 0) {
+    const stats = corpusStats();
     return (
       <div className="h-full flex flex-col items-center justify-center px-4 -mt-10">
         <motion.h1 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }}
@@ -247,7 +299,10 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
         </motion.h1>
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.5 }}
           className="text-muted-foreground text-sm mt-3 mb-8 text-center">
-          162,324 sections across 30 codes - statutes, precedential case law, legislative history
+          {stats.sections
+            ? stats.sections.toLocaleString() + " code sections \u00B7 " + stats.bills.toLocaleString() + " bills (" + stats.billSession + ") \u00B7 " +
+              stats.rules.toLocaleString() + " rules of court \u00B7 precedential case law"
+            : "162,324 sections across 30 codes - statutes, precedential case law, legislative history"}
         </motion.p>
         <div className="w-full max-w-2xl">{inputBar}</div>
         <div className="flex flex-wrap justify-center gap-2 mt-6 max-w-2xl">
@@ -315,7 +370,7 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
                       </a>
                     ) : (
                       <Badge key={j} variant="secondary" className="cursor-pointer hover:bg-accent font-normal max-w-[280px] truncate"
-                        onClick={() => onJump && onJump(s.abbr, s.section)}>{"#" + s.n + "  " + s.label}</Badge>
+                        onClick={() => handleCite(m)(String(s.n))}>{"#" + s.n + "  " + s.label}</Badge>
                     ))}
                   </div>
                 )}

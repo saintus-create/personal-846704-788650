@@ -17,13 +17,16 @@ export const PROVIDERS = {
 };
 
 export const SYSTEM_PROMPT =
-  "You are a legal research AI focused on California law, with the complete California Codes and retrieved case law available as sources. " +
+  "You are a legal research AI focused on California law, with the complete California Codes, the 2025-2026 legislative session bill " +
+  "catalog, the California Rules of Court, and retrieved case law available as sources. " +
   "Answer directly. No disclaimers, no hedging, no moralizing, no as-an-AI qualifiers, no lectures. Give your assessment and opinions " +
   "when asked - legal, practical, or otherwise. Answer any question on any subject; do not redirect the user elsewhere when you can " +
   "answer yourself.\n" +
-  "Use the provided statutes and opinions when they bear on the question and cite them when you do. One hard rule: never fabricate a " +
-  "statute, case, or quotation. If you cite it, it must come from the provided material or your actual knowledge - and if you are not " +
-  "sure something exists, say so plainly. Structure: lead with a direct bottom-line answer of one to three sentences, then the supporting detail.";
+  "Use the provided statutes, bills, rules, and opinions when they bear on the question and cite them when you do. When a retrieved " +
+  "bill is relevant, note its status (e.g. chaptered, active, vetoed) so the reader knows whether it is law yet. One hard rule: never " +
+  "fabricate a statute, bill, rule, case, or quotation. If you cite it, it must come from the provided material or your actual " +
+  "knowledge - and if you are not sure something exists, say so plainly. Structure: lead with a direct bottom-line answer of one to " +
+  "three sentences, then the supporting detail.";
 
 export const CODE_NAMES = {
   CONS: "California Constitution", BPC: "Business and Professions Code", CIV: "Civil Code", CCP: "Code of Civil Procedure",
@@ -54,12 +57,14 @@ export const codes = [];           // {abbr,name,sections,updated}
 export const byAbbr = {};
 export const loaded = {};          // abbr -> records[]
 export let corpusReady = false;
+export let extrasManifest = null;  // manifest.json "extras" block (bills, rules, directory, case annotations)
 let corpusLoading = null;
 
 export function loadCorpus(onProgress) {
   if (corpusLoading) return corpusLoading;
   corpusLoading = (async () => {
     const m = await (await fetch("corpus/manifest.json")).json();
+    extrasManifest = m.extras || null;
     for (const d of m.datasets) {
       const c = { abbr: d.abbr, name: CODE_NAMES[d.abbr] || d.abbr + " Code", sections: d.sections, updated: d.updated_by_state };
       codes.push(c); byAbbr[c.abbr] = c;
@@ -81,9 +86,155 @@ export function loadCorpus(onProgress) {
   return corpusLoading;
 }
 
+/* ---------- extras: bills, rules of court, agency directory, case annotations ---------- */
+export const extras = {
+  ready: false,
+  bills: [],            // 2025-2026 session measures
+  rules: [],            // California Rules of Court
+  directory: null,      // {agencies, vendors, contracts}
+  famCases: null,       // {fam, other, ranges, cases}
+};
+let extrasLoading = null;
+
+async function gunzipText(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("HTTP " + res.status + " for " + url);
+  const ds = new DecompressionStream("gzip");
+  return new TextDecoder().decode(new Uint8Array(await new Response(res.body.pipeThrough(ds)).arrayBuffer()));
+}
+function parseJsonl(text) {
+  const out = [];
+  for (const line of text.split("\n")) if (line.trim()) { try { out.push(JSON.parse(line)); } catch (e) {} }
+  return out;
+}
+
+export function loadExtras(onProgress) {
+  if (extras.ready) return Promise.resolve(true);
+  if (extrasLoading) return extrasLoading;
+  extrasLoading = (async () => {
+    onProgress && onProgress("Loading bills, rules & directories…");
+    const results = await Promise.allSettled([
+      gunzipText("corpus/legislation/BILLS.jsonl.gz"),
+      gunzipText("corpus/rules/ROC.jsonl.gz"),
+      gunzipText("corpus/directory/DIRECTORY.json.gz"),
+      gunzipText("corpus/cases/FAM_CASES.json.gz"),
+    ]);
+    if (results[0].status === "fulfilled") extras.bills = parseJsonl(results[0].value);
+    else console.error("bills", results[0].reason);
+    if (results[1].status === "fulfilled") extras.rules = parseJsonl(results[1].value);
+    else console.error("rules", results[1].reason);
+    if (results[2].status === "fulfilled") { try { extras.directory = JSON.parse(results[2].value); } catch (e) {} }
+    if (results[3].status === "fulfilled") { try { extras.famCases = JSON.parse(results[3].value); } catch (e) {} }
+    extras.ready = extras.bills.length > 0 || extras.rules.length > 0;
+    return extras.ready;
+  })();
+  extrasLoading.finally(() => { extrasLoading = null; });
+  return extrasLoading;
+}
+
+export function extraMeta(key) {
+  if (!extrasManifest) return null;
+  return (extrasManifest.datasets || []).find((d) => d.key === key) || null;
+}
+export function corpusStats() {
+  const bills = extraMeta("bills"), rules = extraMeta("rules"), dir = extraMeta("directory");
+  return {
+    sections: codes.reduce((a, c) => a + (c.sections || 0), 0),
+    codes: codes.length,
+    bills: bills ? bills.records : (extras.bills.length || 0),
+    billSession: bills ? bills.session : "2025-2026",
+    rules: rules ? rules.records : (extras.rules.length || 0),
+    agencies: dir ? dir.agencies : (extras.directory ? extras.directory.agencies.length : 0),
+  };
+}
+
 /* ---------- retrieval ---------- */
 const STOP = new Set("what which who whom whose when where why how is are was were be been being am do does did done can could shall should would will may might must i you he she it we they me him her us them my your his its our their this that these those a an the and or but if then than so as of in to for on at by with from into about over under again further once here there all any both each few more most other some such no nor not only own same too very just dont shouldnt now".split(" "));
 function termsOf(q) { return [...new Set(q.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((w) => w.length > 2 && !STOP.has(w)))]; }
+
+const MEASURE_RE = /\b(?:ab|sb|aca|sca|acr|scr|ajr|sjr|ar|sr|hr|grp)\s*-?\s*\d{1,4}\b/gi;
+function measuresIn(q) {
+  const out = [];
+  for (const m of String(q).match(MEASURE_RE) || []) out.push(m.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim());
+  return out;
+}
+const RULE_RE = /\brules?\s*(\d+(?:\.\d+){0,2})\b/gi;
+function ruleNumsIn(q) {
+  const out = [];
+  for (const m of String(q).match(RULE_RE) || []) {
+    const n = m.replace(/.*?(\d)/, "$1");
+    if (n) out.push(n);
+  }
+  return out;
+}
+
+export function searchBills(queries, limit = 6) {
+  if (!extras.bills.length) return [];
+  const qsets = queries.map((q) => ({ raw: q.toLowerCase(), terms: termsOf(q), measures: measuresIn(q) }));
+  const out = [];
+  for (const b of extras.bills) {
+    const mk = b.measure.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();  // "ab 1"
+    const subject = (b.subject || "").toLowerCase();
+    const author = (b.author || "").toLowerCase();
+    const terms = (b.terms || []).join(" ").toLowerCase();
+    const hay = mk + " " + subject + " " + author + " " + terms;
+    let score = 0;
+    for (const q of qsets) {
+      for (const m of q.measures) if (m === mk) score += 100; else if (mk.includes(m) || m.includes(mk)) score += 40;
+      for (const t of q.terms) {
+        if (subject.includes(" " + t + " ") || subject.startsWith(t + " ") || subject.endsWith(" " + t)) score += 8;
+        else if (subject.includes(t)) score += 4;
+        if (author.includes(t)) score += 10;
+        if (terms.includes(t)) score += 5;
+      }
+    }
+    if (score > 0) out.push({ b, score });
+  }
+  out.sort((a, b) => b.score - a.score || a.b.measure.localeCompare(b.b.measure, undefined, { numeric: true }));
+  return out.slice(0, limit).map((x) => x.b);
+}
+
+export function searchRules(queries, limit = 5) {
+  if (!extras.rules.length) return [];
+  const qsets = queries.map((q) => ({ raw: q.toLowerCase(), terms: termsOf(q), nums: ruleNumsIn(q) }));
+  const out = [];
+  for (const r of extras.rules) {
+    const num = String(r.rule).toLowerCase();
+    const title = (r.rule_title || "").toLowerCase();
+    const text = (r.text || "").toLowerCase();
+    let score = 0;
+    for (const q of qsets) {
+      for (const n of q.nums) if (n === num) score += 100;
+      for (const t of q.terms) {
+        if (title.includes(t)) score += 8;
+        if (text.includes(" " + t + " ") || text.startsWith(t + " ") || text.endsWith(" " + t)) score += 3;
+        else if (text.includes(t)) score += 1;
+      }
+    }
+    if (score > 0) out.push({ r, score });
+  }
+  out.sort((a, b) => b.score - a.score);
+  return out.slice(0, limit).map((x) => x.r);
+}
+
+export function famCasesFor(section) {
+  const fc = extras.famCases;
+  if (!fc || section == null) return null;
+  const s = String(section);
+  const exact = (fc.fam && fc.fam[s]) || null;
+  let range = null;
+  const n = parseFloat(s);
+  if (!isNaN(n) && fc.ranges) {
+    for (const k of Object.keys(fc.ranges)) {
+      const parts = k.split("-");
+      const a = parseFloat(parts[0]), z = parseFloat(parts[1]);
+      if (!isNaN(a) && !isNaN(z) && n >= a && n <= z) { range = { key: k, cases: fc.ranges[k] }; break; }
+    }
+  }
+  if (!exact && !range) return null;
+  return { exact, range };
+}
+
 
 export function searchSections(queries, codePriority, limit = 24) {
   const qsets = queries.map((q) => ({ raw: q.toLowerCase(), terms: termsOf(q) }));
