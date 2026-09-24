@@ -6,6 +6,7 @@ export default defineConfig({
   base: './',
   plugins: [react()],
   resolve: { alias: { '@': path.resolve(__dirname, './src') } },
+  publicDir: path.resolve(__dirname, '../public'),
   server: { host: '0.0.0.0', allowedHosts: true },
   build: { outDir: 'dist' },
 });

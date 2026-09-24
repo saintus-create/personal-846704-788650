@@ -364,5 +364,105 @@
       "updated_by_state": "July 21, 2026",
       "sha256": "4ec8c5ed944cbfccf85fe96b6721ba245a6d3f614fdba110cd9026596219a5b6"
     }
-  ]
+  ],
+  "extras": {
+    "format": "fern-corpus-extras-v1",
+    "generated_at": "2026-09-24T08:29:11Z",
+    "datasets": [
+      {
+        "sha256": "22d0fcb18289c2753277e657ab81a9735b549486802732886e7df8cc378922b7",
+        "key": "bills",
+        "name": "Bills & Measures — 2025-2026 Session",
+        "file": "legislation/BILLS.jsonl.gz",
+        "records": 5062,
+        "session": "2025-2026",
+        "retrieved_at": "2026-08-21T15:06:50.438774+00:00",
+        "source": "leginfo.legislature.ca.gov via saintus-create/family-905324",
+        "official_source": "https://leginfo.legislature.ca.gov/faces/billSearchClient.xhtml?session_year=20252026"
+      },
+      {
+        "sha256": "a0546207da327204aace109dd91f03ac6cbfc486706329b07a23555d502e7eac",
+        "key": "rules",
+        "name": "California Rules of Court",
+        "file": "rules/ROC.jsonl.gz",
+        "records": 1501,
+        "titles": [
+          {
+            "number": 1,
+            "name": "Title One. Rules Applicable to All Courts",
+            "rules": 26
+          },
+          {
+            "number": 2,
+            "name": "Title Two. Trial Court Rules",
+            "rules": 141
+          },
+          {
+            "number": 3,
+            "name": "Title Three. Civil Rules",
+            "rules": 301
+          },
+          {
+            "number": 4,
+            "name": "Title Four. Criminal Rules",
+            "rules": 94
+          },
+          {
+            "number": 5,
+            "name": "Title Five. Family and Juvenile Rules",
+            "rules": 253
+          },
+          {
+            "number": 6,
+            "name": "Title Six",
+            "rules": 0
+          },
+          {
+            "number": 7,
+            "name": "Title Seven. Probate Rules and Mental Health Rules",
+            "rules": 114
+          },
+          {
+            "number": 8,
+            "name": "Title Eight. Appellate Rules",
+            "rules": 336
+          },
+          {
+            "number": 9,
+            "name": "Title Nine. Rules on Law Practice, Attorneys, and Judges",
+            "rules": 50
+          },
+          {
+            "number": 10,
+            "name": "Title Ten. Judicial Administration Rules",
+            "rules": 187
+          }
+        ],
+        "source": "courts.ca.gov via saintus-create/family-905324",
+        "official_source": "https://www.courts.ca.gov/cms/rules/index.cfm"
+      },
+      {
+        "sha256": "f9eedd6a61b459d7d070cfd9d1a24528bd09a9b0a593bc8a26784d3198d038b5",
+        "key": "directory",
+        "name": "Agency & Public-Records Directory",
+        "file": "directory/DIRECTORY.json.gz",
+        "agencies": 505,
+        "vendors": 7,
+        "contracts": 58,
+        "source": "saintus-create/family-905324 (AGENCIES_EXTRACT, PUBLIC_RECORDS, MUNICIPAL_CONTRACTS)"
+      },
+      {
+        "sha256": "4937be8d84366c3fb321781f5f377b276b5a939d8215527de909cd7ea1e220f0",
+        "key": "famcases",
+        "name": "Case Annotations — Family Code & DVPA",
+        "file": "cases/FAM_CASES.json.gz",
+        "sections_annotated": 39,
+        "other_sections": 4,
+        "ranges": 2,
+        "cases": 64,
+        "source": "saintus-create/family-x1oh1xy2 (curated DVPA case summaries)",
+        "annotations": 103
+      }
+    ]
+  }
 }

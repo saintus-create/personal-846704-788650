@@ -1,9 +1,55 @@
 import React, { useEffect, useState, useRef } from "react";
-import { ChevronRight, ChevronsDownUp, ChevronsUpDown, Search, ExternalLink, Database, ShieldCheck } from "lucide-react";
+import { ChevronRight, ChevronsDownUp, ChevronsUpDown, Search, ExternalLink, Database, ShieldCheck, Gavel } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { loadCorpus, corpusReady, codes, byAbbr, buildUnits, searchSections } from "@/lib/engine";
+import { loadCorpus, loadExtras, corpusReady, extras, codes, byAbbr, buildUnits, searchSections, famCasesFor, corpusStats } from "@/lib/engine";
+
+// re-render when the extras (case annotations) finish loading in the background
+function useExtrasReady() {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    let on = true;
+    if (!extras.famCases) loadExtras().then(() => { if (on) setTick((t) => t + 1); }).catch(() => {});
+    return () => { on = false; };
+  }, []);
+  return !!extras.famCases;
+}
+
+function CaseItem({ c }) {
+  return (
+    <details className="text-xs mt-0.5">
+      <summary className="cursor-pointer select-none font-medium list-none [&::-webkit-details-marker]:hidden flex items-baseline gap-1">
+        <ChevronRight className="h-3 w-3 mt-0.5 shrink-0 text-muted-foreground transition-transform" />
+        <span>{c.name}{c.year ? " (" + c.year + ")" : ""}{c.cite ? " " + c.cite : ""}</span>
+      </summary>
+      {c.desc && <div className="pl-4 mt-1 text-muted-foreground leading-relaxed">{c.desc}</div>}
+    </details>
+  );
+}
+
+function CaseNotes({ section }) {
+  const d = famCasesFor(section);
+  if (!d || (!d.exact && !d.range)) return null;
+  const exact = d.exact || [];
+  const seen = new Set(exact.map((c) => c.name.toLowerCase()));
+  const ranged = d.range ? d.range.cases.filter((c) => !seen.has(c.name.toLowerCase())) : [];
+  if (!exact.length && !ranged.length) return null;
+  return (
+    <div className="mt-2 rounded-lg border border-emerald-700/25 bg-emerald-50/60 dark:bg-emerald-950/25 p-2.5">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1 mb-1">
+        <Gavel className="h-3 w-3" /> Key cases on this section
+      </div>
+      {exact.map((c, i) => <CaseItem key={i} c={c} />)}
+      {ranged.length > 0 && (
+        <div className="mt-1.5">
+          <div className="text-[10px] text-muted-foreground">Also cited across §§ {d.range.key}:</div>
+          {ranged.map((c, i) => <CaseItem key={i} c={c} />)}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function SectionBlock({ s, abbr, filter }) {
   const cite = s.citation || (abbr + " \u00A7 " + s.section);
@@ -15,6 +61,7 @@ function SectionBlock({ s, abbr, filter }) {
       {s.repealed && <span className="ml-2 text-sm font-semibold text-orange-600 dark:text-orange-400">(Repealed)</span>}
       <div className="text-sm whitespace-pre-wrap mt-1">{(s.text || "").trim()}</div>
       {s.history && <div className="text-xs italic text-muted-foreground mt-1">{s.history}</div>}
+      {abbr === "FAM" && !s.repealed && <CaseNotes section={s.section} />}
     </div>
   );
 }
@@ -56,6 +103,8 @@ export default function Browser({ activeCode, jumpSection, onCodeChange }) {
   const [globalResults, setGlobalResults] = useState([]);
   const [globalBusy, setGlobalBusy] = useState(false);
   const boxRef = useRef(null);
+  useExtrasReady();
+  const stats = corpusStats();
 
   useEffect(() => {
     if (!activeCode) return;
@@ -113,14 +162,18 @@ export default function Browser({ activeCode, jumpSection, onCodeChange }) {
           <div className="eyebrow"><Database className="h-3.5 w-3.5" /> Primary law library</div>
           <h1 className="text-2xl font-bold mb-2 mt-3">Browse Codes</h1>
           <p className="text-muted-foreground text-sm">
-            The complete California Codes - every section, readable in place. Pick a code to start
-            {window.innerWidth >= 768 ? " from the left" : " above"}.
+            The complete California Codes - every section, readable in place, with curated case notes on the
+            Family Code. Pick a code to start{window.innerWidth >= 768 ? " from the left" : " above"}, or use the
+            Bills, Rules, and Directory tabs above.
           </p>
           <div className="grid sm:grid-cols-3 gap-3 mt-6">
             {[
-              ["30", "codes and Constitution", "Local corpus"],
-              ["162k+", "indexed sections", "Searchable text"],
-              ["Live", "official source link", "Verify before relying"],
+              [stats.codes ? String(stats.codes) : "30", "codes and Constitution", "Local corpus"],
+              [stats.sections ? Math.round(stats.sections / 1000) + "k+" : "162k+", "indexed sections", "Searchable text"],
+              [stats.bills ? stats.bills.toLocaleString() : "5,062", "bills · " + (stats.billSession || "2025-2026") + " session", "Bills tab"],
+              [stats.rules ? stats.rules.toLocaleString() : "1,501", "Rules of Court", "Rules tab"],
+              [stats.agencies ? stats.agencies.toLocaleString() : "505", "agencies & vendors", "Directory tab"],
+              ["Live", "official source links", "Verify before relying"],
             ].map(([value, label, note]) => <div key={label} className="metric-card"><div className="text-xl font-semibold tracking-tight">{value}</div><div className="text-xs font-medium mt-1">{label}</div><div className="text-[11px] text-muted-foreground mt-1">{note}</div></div>)}
           </div>
           <form onSubmit={runGlobalSearch} className="mt-6 flex gap-2">

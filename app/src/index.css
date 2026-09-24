@@ -30,7 +30,7 @@
     --foreground: 40 24% 96%;
     --card: 224 25% 12%;
     --card-foreground: 40 24% 96%;
-    --primary: 40 72% 62%;
+    --primary: 224 72% 74%;
     --primary-foreground: 224 28% 10%;
     --secondary: 224 20% 16%;
     --secondary-foreground: 40 24% 96%;
@@ -40,9 +40,9 @@
     --accent-foreground: 40 24% 96%;
     --border: 224 16% 15%;
     --input: 224 16% 18%;
-    --ring: 40 72% 62%;
-    --brand: 40 72% 62%;
-    --brand-2: 40 72% 62%;
+    --ring: 224 72% 74%;
+    --brand: 224 72% 74%;
+    --brand-2: 224 60% 82%;
   }
 }
 

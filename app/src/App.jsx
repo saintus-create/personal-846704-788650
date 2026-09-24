@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Sun, Moon, Plus, MessageSquare, Trash2, BookOpen, Settings, PanelLeft, PanelLeftClose } from "lucide-react";
+import { Sun, Moon, Plus, MessageSquare, Trash2, BookOpen, Settings, PanelLeft, PanelLeftClose, Landmark, Gavel, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +9,10 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Chat from "@/components/Chat";
 import Browser from "@/components/Browser";
-import { codes, loadCorpus, PROVIDERS, store, getModel } from "@/lib/engine";
+import Bills from "@/components/Bills";
+import Rules from "@/components/Rules";
+import Directory from "@/components/Directory";
+import { codes, loadCorpus, loadExtras, PROVIDERS, store, getModel } from "@/lib/engine";
 
 const CHATS_KEY = "ai2.chats";
 
@@ -28,6 +31,8 @@ export default function App() {
   const [dark, setDark] = useState(false);
   const [activeCode, setActiveCode] = useState(null);
   const [jumpSection, setJumpSection] = useState(null);
+  const [jumpRule, setJumpRule] = useState(null);
+  const [, setExtrasTick] = useState(0);
   const [corpusStatus, setCorpusStatus] = useState("Loading the California Codes…");
   const [{ chats, activeId }, setChatState] = useState(loadChats);
   const [busy, setBusy] = useState(false);
@@ -38,7 +43,8 @@ export default function App() {
     const isDark = saved === "dark" || (!saved && matchMedia("(prefers-color-scheme: dark)").matches);
     setDark(isDark);
     document.documentElement.classList.toggle("dark", isDark);
-    loadCorpus(setCorpusStatus).then((ok) => setCorpusStatus(ok ? "ready" : "error")).catch(() => setCorpusStatus("error"));
+    loadCorpus(setCorpusStatus).then((ok) => setCorpusStatus(ok ? "ready" : "error")).catch(() => setCorpusStatus("error"))
+      .finally(() => { loadExtras().then(() => setExtrasTick((t) => t + 1)).catch(() => {}); });
   }, []);
 
   useEffect(() => { try { localStorage.setItem("ai2.side", sideOpen ? "1" : "0"); } catch (e) {} }, [sideOpen]);
@@ -75,9 +81,14 @@ export default function App() {
     }));
   }, []);
 
-  const jump = (abbr, section) => {
-    setActiveCode(abbr);
-    setJumpSection(section);
+  const jump = (target, section) => {
+    if (typeof target === "string") {
+      setActiveCode(target); setJumpSection(section || null); setJumpRule(null); setTab("codes"); return;
+    }
+    if (target && target.tab === "rules") { setJumpRule({ rule: target.rule, n: Date.now() }); setTab("rules"); return; }
+    setActiveCode((target && target.abbr) || null);
+    setJumpSection((target && target.section) || null);
+    setJumpRule(null);
     setTab("codes");
   };
 
@@ -123,6 +134,9 @@ export default function App() {
             <div className="flex items-center gap-0.5 ml-1">
               <button className={iconTab(tab === "ai")} onClick={() => setTab("ai")} title="Ask AI"><MessageSquare className="h-4 w-4" /></button>
               <button className={iconTab(tab === "codes")} onClick={() => setTab("codes")} title="Browse Codes"><BookOpen className="h-4 w-4" /></button>
+              <button className={iconTab(tab === "bills")} onClick={() => setTab("bills")} title="Bills & Measures (2025-26)"><Landmark className="h-4 w-4" /></button>
+              <button className={iconTab(tab === "rules")} onClick={() => setTab("rules")} title="Rules of Court"><Gavel className="h-4 w-4" /></button>
+              <button className={iconTab(tab === "directory")} onClick={() => setTab("directory")} title="Agency Directory"><Building2 className="h-4 w-4" /></button>
             </div>
             <div className="flex-1" />
 
@@ -173,7 +187,7 @@ export default function App() {
                   onJump={jump} onCorpusStatus={setCorpusStatus} onBusyChange={setBusy} />
               </div>
             </div>
-          ) : (
+          ) : tab === "codes" ? (
             <div className="flex h-full">
               <div className="hidden md:block w-64 border-r shrink-0">
                 <div className="p-3 overflow-y-auto h-full">
@@ -193,6 +207,12 @@ export default function App() {
                   onCodeChange={(a) => { setActiveCode(a); setJumpSection(null); }} />
               </div>
             </div>
+          ) : tab === "bills" ? (
+            <div className="h-full overflow-y-auto"><Bills /></div>
+          ) : tab === "rules" ? (
+            <div className="h-full overflow-y-auto"><Rules jumpRule={jumpRule} /></div>
+          ) : (
+            <div className="h-full overflow-y-auto"><Directory /></div>
           )}
         </div>
 
