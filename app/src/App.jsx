@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Scale, Sun, Moon, Plus, MessageSquare, Trash2, BookOpen, Bot, PanelLeft, PanelLeftClose } from "lucide-react";
+import { Sun, Moon, Plus, MessageSquare, Trash2, BookOpen, Settings, PanelLeft, PanelLeftClose } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
@@ -106,42 +105,34 @@ export default function App() {
   const activeChat = chats.find((c) => c.id === activeId) || null;
   const iconTab = (active) =>
     "inline-flex items-center justify-center h-8 w-8 rounded-md transition-colors " +
-    (active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground");
+    (active ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground");
 
   return (
     <div className="h-screen p-1.5 sm:p-2.5 bg-background">
       <div className="h-full rounded-xl border shadow-sm overflow-hidden flex flex-col bg-background">
         <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 z-40">
           <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 h-14">
-            <div className="flex items-center gap-2 font-bold cursor-pointer select-none shrink-0" onClick={() => setTab("ai")}>
-              <Scale className="h-5 w-5 brand-color" />
-              <span className="hidden sm:inline">CA <span className="brand-color">Leg Info</span></span>
+            <div className="flex items-center font-medium cursor-pointer select-none min-w-0 shrink overflow-hidden text-sm sm:text-[15px]" onClick={() => setTab("ai")}>
+              <span className="truncate">California Legislative Information <span className="text-[9px] align-super opacity-60">®</span></span>
             </div>
             {tab === "ai" && (
               <Button variant="ghost" size="icon" className="h-8 w-8 hidden lg:inline-flex" onClick={() => setSideOpen(!sideOpen)} title="History">
                 {sideOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
               </Button>
             )}
-            <div className="flex items-center gap-1 rounded-lg bg-muted p-1 ml-1">
+            <div className="flex items-center gap-0.5 ml-1">
               <button className={iconTab(tab === "ai")} onClick={() => setTab("ai")} title="Ask AI"><MessageSquare className="h-4 w-4" /></button>
               <button className={iconTab(tab === "codes")} onClick={() => setTab("codes")} title="Browse Codes"><BookOpen className="h-4 w-4" /></button>
             </div>
             <div className="flex-1" />
-            {tab === "ai" && (
-              <div className="hidden sm:block">
-                <Badge variant="outline" className="font-normal text-muted-foreground max-w-[240px] truncate">
-                  {corpusStatus === "ready" ? "\u2713 162,324 sections loaded" :
-                   corpusStatus === "error" ? "corpus unavailable" : corpusStatus}
-                </Badge>
-              </div>
-            )}
+
             {tab === "ai" && (
               <Button variant="outline" size="icon" onClick={() => { newChat(); }} title="New chat" className="h-8 w-8">
                 <Plus className="h-4 w-4" />
               </Button>
             )}
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={openSettings} title={"AI engine: " + PROVIDERS[engine].label}>
-              <Bot className="h-4 w-4" />
+              <Settings className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleTheme} title="Theme">
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}

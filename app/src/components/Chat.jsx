@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowUp, Scale, Loader2, ExternalLink, Copy, Check, Download, RefreshCw, Zap, ShieldCheck } from "lucide-react";
+import { ArrowUp, Loader2, ExternalLink, Copy, Check, Download, RefreshCw, Zap, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -220,7 +220,7 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
 
   const inputBar = (
     <form onSubmit={ask} className="w-full">
-      <div className="rounded-2xl border bg-card shadow-sm focus-within:ring-1 focus-within:ring-ring overflow-hidden">
+      <div className="rounded-2xl border bg-muted/60 dark:bg-muted/40 shadow-sm focus-within:ring-1 focus-within:ring-ring overflow-hidden">
         <Input value={input} onChange={(e) => setInput(e.target.value)}
           placeholder="Ask anything about California law…"
           className="h-12 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 text-[15px] px-4" />
@@ -240,21 +240,24 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
 
   if (messages.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center px-4 -mt-10">
+      <div className="relative h-full flex flex-col items-center justify-center px-4 -mt-10 overflow-hidden">
+        <div aria-hidden className="absolute inset-0 pointer-events-none select-none flex items-center justify-center">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35, duration: 1.1 }}
+            className="text-center leading-[1.45] font-light tracking-tight text-[9vw] sm:text-[6vw] text-foreground/[0.045] whitespace-nowrap
+                       [-webkit-mask-image:linear-gradient(to_bottom,transparent,black_22%,black_78%,transparent)] [mask-image:linear-gradient(to_bottom,transparent,black_22%,black_78%,transparent)]">
+            statutes<br />precedential case law<br />legislative history
+          </motion.div>
+        </div>
         <motion.h1 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }}
-          className="text-3xl sm:text-4xl font-semibold tracking-tight text-center">
+          className="text-3xl sm:text-4xl font-light tracking-tight text-center">
           California law, <span className="brand-color">answered.</span>
         </motion.h1>
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.5 }}
-          className="text-muted-foreground text-sm mt-3 mb-8 text-center">
-          162,324 sections across 30 codes - statutes, precedential case law, legislative history
-        </motion.p>
-        <div className="w-full max-w-2xl">{inputBar}</div>
-        <div className="flex flex-wrap justify-center gap-2 mt-6 max-w-2xl">
+        <div className="w-full max-w-2xl mt-8">{inputBar}</div>
+        <div className="flex flex-col items-center gap-1.5 mt-6 max-w-2xl">
           {EXAMPLES.slice(0, 4).map((ex, i) => (
             <motion.button key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 + i * 0.05 }} onClick={() => askText(ex.q)}
-              className="text-[13px] px-3.5 py-1.5 rounded-full border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
+              className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
               {ex.label}
             </motion.button>
           ))}
