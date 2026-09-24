@@ -241,12 +241,14 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
   if (messages.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center px-4 -mt-10">
-        <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-center">
+        <motion.h1 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: "easeOut" }}
+          className="text-3xl sm:text-4xl font-semibold tracking-tight text-center">
           California law, <span className="brand-color">answered.</span>
-        </h1>
-        <p className="text-muted-foreground text-sm mt-3 mb-8 text-center">
+        </motion.h1>
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.5 }}
+          className="text-muted-foreground text-sm mt-3 mb-8 text-center">
           162,324 sections across 30 codes - statutes, precedential case law, legislative history
-        </p>
+        </motion.p>
         <div className="w-full max-w-2xl">{inputBar}</div>
         <div className="flex flex-wrap justify-center gap-2 mt-6 max-w-2xl">
           {EXAMPLES.slice(0, 4).map((ex, i) => (
