@@ -5,6 +5,9 @@ export const SARVAM_KEY = "sk_2tvionrw_hfDAK3RK1XhF66Ix9NfM4kSQ";
 export const PROVIDERS = {
   sarvam: { label: "Sarvam AI", url: "https://api.sarvam.ai/v1/chat/completions", model: "sarvam-105b-conversations",
     header: (k) => ({ "api-subscription-key": k }), needsKey: false, builtinKey: true },
+  dolphin: { label: "Dolphin (unfiltered)", url: "https://openrouter.ai/api/v1/chat/completions",
+    model: "cognitivecomputations/dolphin-mistral-24b-venice-edition",
+    header: (k) => ({ Authorization: "Bearer " + k }), needsKey: true },
   pollinations: { label: "Free (no key)", url: "https://text.pollinations.ai/openai", model: "openai",
     header: () => ({}), needsKey: false },
   openrouter: { label: "OpenRouter", url: "https://openrouter.ai/api/v1/chat/completions", model: "openrouter/auto",

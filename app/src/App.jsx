@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Scale, Settings, Sun, Moon, Plus, MessageSquare, Trash2, Gavel } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Scale, Sun, Moon, Plus, MessageSquare, Trash2, BookOpen, Bot, PanelLeft, PanelLeftClose } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Chat from "@/components/Chat";
 import Browser from "@/components/Browser";
-import { codes, byAbbr, loadCorpus, corpusReady, PROVIDERS, store, getModel } from "@/lib/engine";
+import { codes, loadCorpus, PROVIDERS, store, getModel } from "@/lib/engine";
 
 const CHATS_KEY = "ai2.chats";
 
@@ -33,6 +32,7 @@ export default function App() {
   const [corpusStatus, setCorpusStatus] = useState("Loading the California Codes…");
   const [{ chats, activeId }, setChatState] = useState(loadChats);
   const [busy, setBusy] = useState(false);
+  const [sideOpen, setSideOpen] = useState(() => localStorage.getItem("ai2.side") === "1");
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
@@ -41,6 +41,8 @@ export default function App() {
     document.documentElement.classList.toggle("dark", isDark);
     loadCorpus(setCorpusStatus).then((ok) => setCorpusStatus(ok ? "ready" : "error")).catch(() => setCorpusStatus("error"));
   }, []);
+
+  useEffect(() => { try { localStorage.setItem("ai2.side", sideOpen ? "1" : "0"); } catch (e) {} }, [sideOpen]);
 
   useEffect(() => {
     try { localStorage.setItem(CHATS_KEY, JSON.stringify({ chats: chats.slice(0, 30), activeId })); } catch (e) {}
@@ -102,151 +104,153 @@ export default function App() {
   };
 
   const activeChat = chats.find((c) => c.id === activeId) || null;
+  const iconTab = (active) =>
+    "inline-flex items-center justify-center h-8 w-8 rounded-md transition-colors " +
+    (active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground");
 
   return (
-    <div className="h-screen flex flex-col app-shell">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 sticky top-0 z-40 app-header">
-        <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 h-14">
-          <div className="flex items-center gap-2.5 font-semibold cursor-pointer select-none shrink-0" onClick={() => setTab("ai")}>
-            <span className="brand-mark"><Scale className="h-4 w-4" /></span>
-            <span className="hidden sm:inline tracking-tight">CA <span className="brand-color">Leg Info</span></span>
-          </div>
-          <Tabs value={tab} onValueChange={setTab} className="ml-1">
-            <TabsList>
-              <TabsTrigger value="ai">Ask AI</TabsTrigger>
-              <TabsTrigger value="codes">Browse Codes</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <div className="flex-1" />
-          {tab === "ai" && chats.length > 0 && (
-            <div className="hidden sm:block">
-              <Badge variant="outline" className="font-normal text-muted-foreground max-w-[240px] truncate status-badge">
-                {corpusStatus === "ready" ? "\u2713 162,324 sections loaded" :
-                 corpusStatus === "error" ? "corpus unavailable" : corpusStatus}
-              </Badge>
+    <div className="h-screen p-1.5 sm:p-2.5 bg-background">
+      <div className="h-full rounded-xl border overflow-hidden flex flex-col bg-background">
+        <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 z-40">
+          <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 h-14">
+            <div className="flex items-center gap-2 font-bold cursor-pointer select-none shrink-0" onClick={() => setTab("ai")}>
+              <Scale className="h-5 w-5 brand-color" />
+              <span className="hidden sm:inline">CA <span className="brand-color">Leg Info</span></span>
             </div>
-          )}
-          {tab === "ai" && chats.length > 0 && (
-            <Button variant="outline" size="icon" onClick={() => { newChat(); }} title="New chat" className="h-8 w-8">
-              <Plus className="h-4 w-4" />
-            </Button>
-          )}
-          <Select value={engine} onValueChange={(v) => { store.provider = v; setEngine(v); if (PROVIDERS[v].needsKey && !store.key(v)) openSettings(); }}>
-            <SelectTrigger className="w-[130px] sm:w-[150px] h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(PROVIDERS).map(([k, p]) => (
-                <SelectItem key={k} value={k} className="text-xs">{p.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="ghost" size="icon" onClick={openSettings} title="AI settings"><Settings className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" onClick={toggleTheme} title="Theme">{dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}</Button>
-        </div>
-      </header>
-
-      <div className="flex-1 overflow-hidden">
-        {tab === "ai" ? (
-          <div className="flex h-full">
-            <div className="hidden lg:flex flex-col w-60 border-r shrink-0">
-              <div className="p-3">
-                <Button onClick={() => { newChat(); }} variant="outline" size="sm" className="w-full justify-start gap-2 h-8" disabled={busy}>
-                  <Plus className="h-4 w-4" /> New chat
-                </Button>
+            {tab === "ai" && (
+              <Button variant="ghost" size="icon" className="h-8 w-8 hidden lg:inline-flex" onClick={() => setSideOpen(!sideOpen)} title="History">
+                {sideOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
+              </Button>
+            )}
+            <div className="flex items-center gap-1 rounded-lg bg-muted p-1 ml-1">
+              <button className={iconTab(tab === "ai")} onClick={() => setTab("ai")} title="Ask AI"><MessageSquare className="h-4 w-4" /></button>
+              <button className={iconTab(tab === "codes")} onClick={() => setTab("codes")} title="Browse Codes"><BookOpen className="h-4 w-4" /></button>
+            </div>
+            <div className="flex-1" />
+            {tab === "ai" && (
+              <div className="hidden sm:block">
+                <Badge variant="outline" className="font-normal text-muted-foreground max-w-[240px] truncate">
+                  {corpusStatus === "ready" ? "\u2713 162,324 sections loaded" :
+                   corpusStatus === "error" ? "corpus unavailable" : corpusStatus}
+                </Badge>
               </div>
-              <ScrollArea className="flex-1 px-3 pb-3">
-                <div className="text-[11px] uppercase tracking-wider text-muted-foreground px-2 pt-3 pb-2">History</div>
-                <div className="flex flex-col gap-0.5">
-                  {chats.length === 0 && (
-                    <div className="text-xs text-muted-foreground px-2 py-4">No conversations yet. Your chats are saved in this browser.</div>
-                  )}
-                  {chats.map((c) => (
-                    <button key={c.id} onClick={() => selectChat(c.id)} disabled={busy}
-                      className={"group w-full flex items-center gap-2 rounded-md px-2 py-2 text-left text-[13px] transition-colors disabled:opacity-50 " +
-                        (c.id === activeId ? "bg-accent text-accent-foreground font-medium" : "hover:bg-accent/50")}>
-                      <MessageSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      <span className="truncate flex-1 min-w-0">{c.title}</span>
-                      <Trash2 className="h-3.5 w-3.5 shrink-0 opacity-0 group-hover:opacity-100 hover:text-destructive"
-                        onClick={(e) => deleteChat(e, c.id)} />
+            )}
+            {tab === "ai" && (
+              <Button variant="outline" size="icon" onClick={() => { newChat(); }} title="New chat" className="h-8 w-8">
+                <Plus className="h-4 w-4" />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={openSettings} title={"AI engine: " + PROVIDERS[engine].label}>
+              <Bot className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleTheme} title="Theme">
+              {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-hidden">
+          {tab === "ai" ? (
+            <div className="flex h-full">
+              <div className={sideOpen ? "hidden lg:flex flex-col w-60 border-r shrink-0" : "hidden"}>
+                <div className="p-3">
+                  <Button onClick={() => { newChat(); }} variant="outline" size="sm" className="w-full justify-start gap-2 h-8" disabled={busy}>
+                    <Plus className="h-4 w-4" /> New chat
+                  </Button>
+                </div>
+                <ScrollArea className="flex-1 px-3 pb-3">
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground px-2 pt-3 pb-2">History</div>
+                  <div className="flex flex-col gap-0.5">
+                    {chats.length === 0 && (
+                      <div className="text-xs text-muted-foreground px-2 py-4">No conversations yet. Your chats are saved in this browser.</div>
+                    )}
+                    {chats.map((c) => (
+                      <button key={c.id} onClick={() => selectChat(c.id)} disabled={busy}
+                        className={"group w-full flex items-center gap-2 rounded-md px-2 py-2 text-left text-[13px] transition-colors disabled:opacity-50 " +
+                          (c.id === activeId ? "bg-accent text-accent-foreground font-medium" : "hover:bg-accent/50")}>
+                        <MessageSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span className="truncate flex-1 min-w-0">{c.title}</span>
+                        <Trash2 className="h-3.5 w-3.5 shrink-0 opacity-0 group-hover:opacity-100 hover:text-destructive"
+                          onClick={(e) => deleteChat(e, c.id)} />
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <Chat key="chat" activeChat={activeChat} onUpdateChat={updateChat} onNewChat={newChat}
+                  onJump={jump} onCorpusStatus={setCorpusStatus} onBusyChange={setBusy} />
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-full">
+              <div className="hidden md:block w-64 border-r shrink-0">
+                <div className="p-3 overflow-y-auto h-full">
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground px-2 pb-2">California Codes</div>
+                  {codes.map((c) => (
+                    <button key={c.abbr} onClick={() => { setActiveCode(c.abbr); setJumpSection(null); }}
+                      className={"w-full flex justify-between items-center gap-2 rounded-md px-2 py-1.5 text-[13px] text-left transition-colors " +
+                        (activeCode === c.abbr ? "bg-accent text-accent-foreground font-medium" : "hover:bg-accent/50")}>
+                      <span className="truncate">{c.name}</span>
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">{c.sections.toLocaleString()}</span>
                     </button>
                   ))}
                 </div>
-              </ScrollArea>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <Chat key="chat" activeChat={activeChat} onUpdateChat={updateChat} onNewChat={newChat}
-                onJump={jump} onCorpusStatus={setCorpusStatus} onBusyChange={setBusy} />
-            </div>
-          </div>
-        ) : (
-          <div className="flex h-full">
-            <div className="hidden md:block w-64 border-r shrink-0">
-              <div className="p-3 overflow-y-auto h-full">
-                <div className="flex items-center gap-2 px-2 pb-2 text-[11px] uppercase tracking-wider text-muted-foreground"><Gavel className="h-3.5 w-3.5" /> California Codes</div>
-                {codes.map((c) => (
-                  <button key={c.abbr} onClick={() => { setActiveCode(c.abbr); setJumpSection(null); }}
-                    className={"w-full flex justify-between items-center gap-2 rounded-md px-2 py-1.5 text-[13px] text-left transition-colors " +
-                      (activeCode === c.abbr ? "bg-accent text-accent-foreground font-medium" : "hover:bg-accent/50")}>
-                    <span className="truncate">{c.name}</span>
-                    <span className="text-[10px] text-muted-foreground whitespace-nowrap">{c.sections.toLocaleString()}</span>
-                  </button>
-                ))}
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                <Browser activeCode={activeCode} jumpSection={jumpSection}
+                  onCodeChange={(a) => { setActiveCode(a); setJumpSection(null); }} />
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto">
-              <Browser activeCode={activeCode} jumpSection={jumpSection}
-                onCodeChange={(a) => { setActiveCode(a); setJumpSection(null); }} />
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>AI settings</DialogTitle>
-            <DialogDescription>
-              Sarvam AI is built in and ready. To use another engine instead, add a key from{" "}
-              <a className="underline" href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a>,{" "}
-              <a className="underline" href="https://dashboard.sarvam.ai" target="_blank" rel="noopener">Sarvam</a> or{" "}
-              <a className="underline" href="https://console.mistral.ai" target="_blank" rel="noopener">Mistral</a>.
-              A free <a className="underline" href="https://www.courtlistener.com" target="_blank" rel="noopener">CourtListener</a> token unlocks full case-law search.
-              Keys are stored only in your browser.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="grid gap-2">
-              <Label>Engine</Label>
-              <Select value={sProvider} onValueChange={(v) => { setSProvider(v); setSModel(store.model(v)); setSKey(""); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {Object.entries(PROVIDERS).map(([k, p]) => (
-                    <SelectItem key={k} value={k}>{p.label}{p.builtinKey ? " (built in)" : ""}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>AI settings</DialogTitle>
+              <DialogDescription>
+                Sarvam AI is built in and ready. Dolphin (unfiltered) runs on OpenRouter - add a key from{" "}
+                <a className="underline" href="https://openrouter.ai/keys" target="_blank" rel="noopener">OpenRouter</a>,{" "}
+                <a className="underline" href="https://dashboard.sarvam.ai" target="_blank" rel="noopener">Sarvam</a> or{" "}
+                <a className="underline" href="https://console.mistral.ai" target="_blank" rel="noopener">Mistral</a>.
+                A free <a className="underline" href="https://www.courtlistener.com" target="_blank" rel="noopener">CourtListener</a> token unlocks full case-law search.
+                Keys are stored only in your browser.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-2">
+              <div className="grid gap-2">
+                <Label>Engine</Label>
+                <Select value={sProvider} onValueChange={(v) => { setSProvider(v); setSModel(store.model(v)); setSKey(""); }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(PROVIDERS).map(([k, p]) => (
+                      <SelectItem key={k} value={k}>{p.label}{p.builtinKey ? " (built in)" : ""}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="s-model">Model</Label>
+                <Input id="s-model" value={sModel} onChange={(e) => setSModel(e.target.value)} placeholder="model id" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="s-key">API key (not needed for Sarvam or the free engine)</Label>
+                <Input id="s-key" type="password" value={sKey} onChange={(e) => setSKey(e.target.value)} placeholder="paste key" />
+              </div>
+              <Separator />
+              <div className="grid gap-2">
+                <Label htmlFor="s-cl">CourtListener token (optional, free)</Label>
+                <Input id="s-cl" type="password" value={sCl} onChange={(e) => setSCl(e.target.value)} placeholder="paste CourtListener token" />
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="s-model">Model</Label>
-              <Input id="s-model" value={sModel} onChange={(e) => setSModel(e.target.value)} placeholder="model id" />
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setSettingsOpen(false)}>Cancel</Button>
+              <Button onClick={saveSettings}>Save</Button>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="s-key">API key (not needed for Sarvam or the free engine)</Label>
-              <Input id="s-key" type="password" value={sKey} onChange={(e) => setSKey(e.target.value)} placeholder="paste key" />
-            </div>
-            <Separator />
-            <div className="grid gap-2">
-              <Label htmlFor="s-cl">CourtListener token (optional, free)</Label>
-              <Input id="s-cl" type="password" value={sCl} onChange={(e) => setSCl(e.target.value)} placeholder="paste CourtListener token" />
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setSettingsOpen(false)}>Cancel</Button>
-            <Button onClick={saveSettings}>Save</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }

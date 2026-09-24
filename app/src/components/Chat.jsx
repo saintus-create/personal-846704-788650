@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
 import { miniMd, withCites, Html } from "@/components/mini-md";
 import {
   loadCorpus, corpusReady, planQuestion, searchSections, analyzeSections, searchCaseLaw,
@@ -198,18 +197,20 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
 
   const inputBar = (
     <form onSubmit={ask} className="w-full">
-      <div className="flex gap-2">
+      <div className="rounded-2xl border bg-card shadow-sm focus-within:ring-1 focus-within:ring-ring overflow-hidden">
         <Input value={input} onChange={(e) => setInput(e.target.value)}
           placeholder="Ask anything about California law…"
-          className="h-12 rounded-2xl text-[15px] shadow-sm bg-card px-4" />
-        <Button type="submit" size="icon" className="h-12 w-12 rounded-2xl shrink-0" disabled={!!status}><ArrowUp /></Button>
-      </div>
-      <div className="flex items-center gap-2 mt-3 justify-between">
-        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-          <Switch checked={deep} onCheckedChange={toggleDeep} />
-          <span className="inline-flex items-center gap-1"><Zap className="h-3 w-3" /> Deep research</span>
-        </label>
-        <span className="text-[11px] text-muted-foreground hidden sm:block">Answers cite their sources - click any marker.</span>
+          className="h-12 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 text-[15px] px-4" />
+        <div className="flex items-center justify-between px-2.5 pb-2.5">
+          <button type="button" onClick={() => toggleDeep(!deep)} title="Deep research"
+            className={"inline-flex items-center justify-center h-8 w-8 rounded-lg transition-colors " +
+              (deep ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}>
+            <Zap className="h-4 w-4" />
+          </button>
+          <Button type="submit" size="icon" className="h-8 w-8 rounded-full" disabled={!!status}>
+            <ArrowUp className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </form>
   );
