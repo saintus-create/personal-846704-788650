@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowUp, Scale, Loader2, ExternalLink, Copy, Check, Download, RefreshCw, Zap } from "lucide-react";
+import { ArrowUp, Scale, Loader2, ExternalLink, Copy, Check, Download, RefreshCw, Zap, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ const AI_MD_CLASSES = "text-[15px] [&_p]:leading-7 [&_li]:leading-relaxed [&_h4]
 
 export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCorpusStatus, onBusyChange }) {
   const [messages, setMessages] = useState(() => (activeChat ? activeChat.msgs : []));
-  const [status, setStatus] = useState(null);
+  const [steps, setSteps] = useState([]);
   const [input, setInput] = useState("");
   const [deep, setDeep] = useState(() => localStorage.getItem("ai2.deep") === "1");
   const [copied, setCopied] = useState(null);
@@ -44,7 +44,8 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
 
   useEffect(() => { msgsRef.current = messages; }, [messages]);
   useEffect(() => { chatId.current = activeChat ? activeChat.id : null; }, [activeChat]);
-  useEffect(() => { onBusyChange && onBusyChange(!!status); }, [status, onBusyChange]);
+  const working = steps.length > 0;
+  useEffect(() => { onBusyChange && onBusyChange(working); }, [working, onBusyChange]);
 
   useEffect(() => {
     setMessages(activeChat ? activeChat.msgs : []);
@@ -57,7 +58,7 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
     if (!box || !logEnd.current) return;
     const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 160;
     if (nearBottom) logEnd.current.scrollIntoView({ behavior: "smooth" });
-  }, [messages, status]);
+  }, [messages, steps]);
 
   const persist = () => { if (chatId.current) onUpdateChat(chatId.current, msgsRef.current); };
 
@@ -73,43 +74,58 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
     setInput("");
     push({ role: "user", content: q });
 
-    const st = (t) => setStatus(t);
+    const stepSet = (label, detail, done) => setSteps((prev) => {
+      const i = prev.findIndex((x) => x.label === label);
+      const e = { label, detail: detail || "", done: !!done };
+      if (i === -1) return [...prev, e];
+      const c = [...prev]; c[i] = e; return c;
+    });
     try {
-      st("Understanding the research question…");
+      stepSet("Understanding the question", "", false);
       if (!corpusReady) {
-        st("Loading the codes (first time only)…");
+        stepSet("Loading the California Codes", "first visit only", false);
         await loadCorpus((p) => onCorpusStatus && onCorpusStatus(p));
         onCorpusStatus && onCorpusStatus("ready");
+        stepSet("Loading the California Codes", "done", true);
       }
       let plan = { type: "research", queries: [q], codes: [], subquestions: [] };
       if (corpusReady) plan = await planQuestion(q);
+      stepSet("Understanding the question", (plan.type === "lookup" ? "section lookup" : plan.queries.length + " searches") +
+        (plan.codes && plan.codes.length ? " · " + plan.codes.join(" ") : ""), true);
 
       let used = [];
       const deepMode = deep && corpusReady && plan.type !== "lookup" && (plan.subquestions || []).length > 1;
       if (deepMode) {
-        st("Deep research: retrieving for each sub-question…");
+        stepSet("Retrieving statutes", "sub-question passes", false);
         const seen = {};
         const pushCand = (x) => { const k = x.abbr + "|" + (x.r.citation || x.r.section); if (!seen[k]) { seen[k] = 1; used.push(x); } };
         for (const sq of plan.subquestions.slice(0, 3)) {
           for (const x of searchSections([sq], plan.codes, 10).slice(0, 5)) pushCand(x);
         }
         for (const x of searchSections(plan.queries, plan.codes, 14)) pushCand(x);
+        stepSet("Retrieving statutes", used.length + " sections found", true);
         if (used.length > 16) {
-          st("Deep research: analyzing the best sources…");
+          stepSet("Analyzing sections", "shortlisting the most relevant", false);
           used = await analyzeSections(q, used.slice(0, 30));
+          stepSet("Analyzing sections", used.length + " most relevant kept", true);
         }
       } else {
-        st(plan.type === "lookup" ? "Locating the section…" : "Retrieving relevant sources…");
+        stepSet("Retrieving statutes", "", false);
         const candidates = corpusReady ? searchSections(plan.queries, plan.codes, 24) : [];
+        stepSet("Retrieving statutes", candidates.length + " candidate sections", true);
         if (plan.type !== "lookup" && candidates.length > 10) {
-          st(`Analyzing ${candidates.length} sections and searching judicial opinions…`);
+          stepSet("Analyzing sections", candidates.length + " candidates · verifying relevance", false);
           const both = await Promise.all([analyzeSections(q, candidates), searchCaseLaw(plan.queries)]);
           used = both[0];
+          stepSet("Analyzing sections", used.length + " most relevant kept", true);
         } else used = candidates;
       }
+      stepSet("Searching judicial opinions", "CourtListener · precedential", false);
       const cases = corpusReady ? await searchCaseLaw(plan.queries) : [];
+      stepSet("Searching judicial opinions", cases.length + " opinions found", true);
 
-      st(`Reasoning across ${used.length ? used.length + " sources" : "sources"} and drafting the answer…`);
+      stepSet("Reasoning", (used.length + cases.length) + " sources", true);
+      stepSet("Drafting the answer", "streaming", false);
       let context = used.length
         ? "Retrieved sections from the California Codes corpus (statute sources, labeled [1], [2], ...):\n\n" +
           used.map((x, i) => {
@@ -152,13 +168,20 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
       const sources = used.map((x, i) => ({
         n: i + 1, label: x.r.citation || (x.abbr + " \u00A7 " + x.r.section), abbr: x.abbr, section: x.r.section,
       })).concat(cases.map((x, i) => ({ n: "c" + (i + 1), label: x.caseName + (x.cite ? " (" + x.cite + ")" : ""), url: x.url })));
-      update(aiIdx, { role: "ai", content: answer, sources, prompt: prompt, question: q });
+      const markers = answer.match(/\[\s*(?:c)?\d+\s*\]/gi) || [];
+      const matched = markers.filter((mk) => {
+        const v = mk.replace(/[\[\]\s]/g, "").toLowerCase();
+        return sources.some((x) => String(x.n).toLowerCase() === v);
+      }).length;
+      const verified = (used.length || cases.length) && markers.length
+        ? markers.length + " citations \u00B7 " + matched + " matched to retrieved sources" : "";
+      update(aiIdx, { role: "ai", content: answer, sources, prompt: prompt, question: q, verified });
       persist();
 
-      st("Thinking about what to ask next…");
+      stepSet("Drafting the answer", "done", true);
       const fups = await suggestFollowUps(q, answer);
-      update(aiIdx, { role: "ai", content: answer, sources, prompt: prompt, question: q, followUps: fups });
-      setStatus(null);
+      update(aiIdx, { role: "ai", content: answer, sources, prompt: prompt, question: q, verified, followUps: fups });
+      setSteps([]);
       persist();
     } catch (err) {
       let m = String(err.message);
@@ -170,7 +193,7 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
       persist();
     } finally {
       busy.current = false;
-      setStatus(null);
+      setSteps([]);
     }
   }
 
@@ -207,7 +230,7 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
               (deep ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-accent hover:text-foreground")}>
             <Zap className="h-4 w-4" />
           </button>
-          <Button type="submit" size="icon" className="h-8 w-8 rounded-full" disabled={!!status}>
+          <Button type="submit" size="icon" className="h-8 w-8 rounded-full" disabled={steps.length > 0}>
             <ArrowUp className="h-4 w-4" />
           </Button>
         </div>
@@ -250,6 +273,11 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
                   <div className="bg-muted rounded-2xl rounded-br-md px-4 py-2.5 text-[15px] whitespace-pre-wrap">{m.content}</div>
                 ) : (
                   <>
+                    {m.verified && (
+                      <div className="text-[11px] text-muted-foreground flex items-center gap-1 mb-1.5">
+                        <ShieldCheck className="h-3 w-3 text-green-600 dark:text-green-400" />{m.verified}
+                      </div>
+                    )}
                     <Html content={withCites(miniMd(m.content || ""))} className={AI_MD_CLASSES + (m.error ? " text-destructive whitespace-pre-wrap" : "")} onCite={handleCite(m)} />
                     {m.streaming && <span className="inline-block w-2 h-4 bg-foreground/60 animate-pulse ml-0.5 align-middle rounded-sm" />}
                   </>
@@ -296,15 +324,17 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
               </div>
             </motion.div>
           ))}
-          <AnimatePresence>
-            {status && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="flex items-center gap-2 text-muted-foreground text-sm">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {status}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {steps.length > 0 && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-1.5 py-1">
+              {steps.map((st, i) => (
+                <div key={i} className="flex items-center gap-2 text-[13px] text-muted-foreground">
+                  {st.done ? <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400 shrink-0" />
+                           : <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />}
+                  <span>{st.label}{st.detail ? <span className="opacity-70"> — {st.detail}</span> : null}</span>
+                </div>
+              ))}
+            </motion.div>
+          )}
           <div ref={logEnd} />
         </div>
       </div>
