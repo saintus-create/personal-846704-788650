@@ -74,7 +74,7 @@ export function loadCorpus(onProgress) {
         loaded[d.abbr] = recs;
       } catch (e) { console.error(d.abbr, e); }
     }
-    corpusReady = m.datasets.every((d) => Array.isArray(loaded[d.abbr]));
+    corpusReady = Object.keys(loaded).length > 0;
     return corpusReady;
   })();
   corpusLoading.finally(() => { corpusLoading = null; });
