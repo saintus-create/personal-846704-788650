@@ -1,8 +1,0 @@
----
-import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { readFileSync } from 'node:fs';
-const html = readFileSync('src/pages/codes/gov/div-1-div-2/body.html', 'utf-8');
----
-<StarlightPage frontmatter={{ title: "Title 2. GOVERNMENT OF THE STATE OF CALIFORNIA — Division 1–2", description: "California Government Code, Title 2. GOVERNMENT OF THE STATE OF CALIFORNIA — Division 1–2 — full statutory text. Dated research snapshot." }}>
-  <Fragment set:html={html} />
-</StarlightPage>

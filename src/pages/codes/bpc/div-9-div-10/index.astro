@@ -1,8 +1,0 @@
----
-import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { readFileSync } from 'node:fs';
-const html = readFileSync('src/pages/codes/bpc/div-9-div-10/body.html', 'utf-8');
----
-<StarlightPage frontmatter={{ title: "Division 9–10", description: "California Business and Professions Code, Division 9–10 — full statutory text. Dated research snapshot." }}>
-  <Fragment set:html={html} />
-</StarlightPage>

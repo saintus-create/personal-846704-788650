@@ -1,8 +1,0 @@
----
-import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { readFileSync } from 'node:fs';
-const html = readFileSync('src/pages/codes/ins/part-1-part-6.1/body.html', 'utf-8');
----
-<StarlightPage frontmatter={{ title: "Division 2. CLASSES OF INSURANCE — Part 1–6.1", description: "California Insurance Code, Division 2. CLASSES OF INSURANCE — Part 1–6.1 — full statutory text. Dated research snapshot." }}>
-  <Fragment set:html={html} />
-</StarlightPage>

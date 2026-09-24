@@ -1,8 +1,0 @@
----
-import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { readFileSync } from 'node:fs';
-const html = readFileSync('src/pages/codes/wat/div-13-div-35/body.html', 'utf-8');
----
-<StarlightPage frontmatter={{ title: "Division 13–35", description: "California Water Code, Division 13–35 — full statutory text. Dated research snapshot." }}>
-  <Fragment set:html={html} />
-</StarlightPage>

@@ -1,8 +1,0 @@
----
-import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { readFileSync } from 'node:fs';
-const html = readFileSync('src/pages/codes/veh/div-14-div-18/body.html', 'utf-8');
----
-<StarlightPage frontmatter={{ title: "Division 14–18", description: "California Vehicle Code, Division 14–18 — full statutory text. Dated research snapshot." }}>
-  <Fragment set:html={html} />
-</StarlightPage>

@@ -1,8 +1,0 @@
----
-import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { readFileSync } from 'node:fs';
-const html = readFileSync('src/pages/codes/ccp/title-of-title-7/body.html', 'utf-8');
----
-<StarlightPage frontmatter={{ title: "Title OF–7", description: "California Code of Civil Procedure, Title OF–7 — full statutory text. Dated research snapshot." }}>
-  <Fragment set:html={html} />
-</StarlightPage>

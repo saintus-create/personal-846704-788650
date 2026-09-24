@@ -1,8 +1,0 @@
----
-import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { readFileSync } from 'node:fs';
-const html = readFileSync('src/pages/codes/wic/art-1-art-6.2/body.html', 'utf-8');
----
-<StarlightPage frontmatter={{ title: "Division 9. PUBLIC SOCIAL SERVICES — Chapter 7. Basic Health Care — Article 1–6.2", description: "California Welfare and Institutions Code, Division 9. PUBLIC SOCIAL SERVICES — Chapter 7. Basic Health Care — Article 1–6.2 — full statutory text. Dated research snapshot." }}>
-  <Fragment set:html={html} />
-</StarlightPage>

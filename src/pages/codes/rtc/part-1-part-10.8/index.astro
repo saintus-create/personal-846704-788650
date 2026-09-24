@@ -1,8 +1,0 @@
----
-import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { readFileSync } from 'node:fs';
-const html = readFileSync('src/pages/codes/rtc/part-1-part-10.8/body.html', 'utf-8');
----
-<StarlightPage frontmatter={{ title: "Division 2. OTHER TAXES — Part 1–10.8", description: "California Revenue and Taxation Code, Division 2. OTHER TAXES — Part 1–10.8 — full statutory text. Dated research snapshot." }}>
-  <Fragment set:html={html} />
-</StarlightPage>
