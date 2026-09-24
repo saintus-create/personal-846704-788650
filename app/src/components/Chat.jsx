@@ -124,7 +124,7 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
           cases.map((x, i) => "[c" + (i + 1) + "] " + x.caseName + " (" + x.cite + (x.date ? ", " + x.date : "") + ")\n" + x.snippet).join("\n\n");
       }
       let prompt = context +
-        "\n\nCite the sources you rely on inline using their exact bracketed markers, like [3] or [c2], placed right after the sentence each supports." +
+        ((used.length || cases.length) ? "\n\nCite the sources you rely on inline using their exact bracketed markers, like [3] or [c2], placed right after the sentence each supports." : "") +
         "\n\nQuestion: " + q;
       if (plan.subquestions && plan.subquestions.length) prompt += "\n\nSub-questions to cover: " + plan.subquestions.join(" | ");
 

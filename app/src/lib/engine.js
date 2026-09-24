@@ -195,7 +195,7 @@ export async function searchCaseLaw(queries) {
     tried++;
     try {
       const url = "https://api.courtlistener.com/v3/search/?q=" + encodeURIComponent(q) + "&court=cal+calctapp&type=o&stat_Precedential=on";
-      const resp = await fetch(url, token ? { headers: { Authorization: "Token " + token } } : {});
+      const resp = await fetch(url, { ...(token ? { headers: { Authorization: "Token " + token } } : {}), signal: AbortSignal.timeout(8000) });
       if (!resp.ok) { if (resp.status === 429) break; continue; }
       const data = await resp.json();
       const results = (data && data.results) || [];
@@ -213,7 +213,7 @@ export async function searchCaseLaw(queries) {
   if (out.length < 6) {
     try {
       const url2 = "https://api.courtlistener.com/v3/search/?q=" + encodeURIComponent(queries[0]) + "&type=o&stat_Precedential=on";
-      const resp2 = await fetch(url2, token ? { headers: { Authorization: "Token " + token } } : {});
+      const resp2 = await fetch(url2, { ...(token ? { headers: { Authorization: "Token " + token } } : {}), signal: AbortSignal.timeout(8000) });
       if (resp2.ok) {
         const data2 = await resp2.json();
         const results2 = (data2 && data2.results) || [];
