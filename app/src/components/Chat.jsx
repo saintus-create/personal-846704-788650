@@ -14,12 +14,12 @@ import {
 } from "@/lib/engine";
 
 const EXAMPLES = [
-  "What's the difference between burglary and robbery in California?",
-  "What is the statute of limitations for personal injury in California?",
-  "When can a landlord enter a tenant's unit, and what are the penalties for violating it?",
-  "What are the exceptions to at-will employment in California?",
-  "How does California define self-defense in criminal cases?",
-  "What must a business do to comply with CCPA data-deletion requests?",
+  { q: "What's the difference between burglary and robbery in California?", label: "Burglary vs. robbery" },
+  { q: "What is the statute of limitations for personal injury in California?", label: "PI statute of limitations" },
+  { q: "When can a landlord enter a tenant's unit, and what are the penalties for violating it?", label: "Landlord entry rules" },
+  { q: "What are the exceptions to at-will employment in California?", label: "At-will exceptions" },
+  { q: "How does California define self-defense in criminal cases?", label: "Self-defense in CA" },
+  { q: "What must a business do to comply with CCPA data-deletion requests?", label: "CCPA deletion rules" },
 ];
 
 const AI_MD_CLASSES = "text-[15px] [&_p]:leading-7 [&_li]:leading-relaxed [&_h4]:mt-3 [&_h4]:mb-1 [&_h4]:font-semibold " +
@@ -196,42 +196,51 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
     else onJump && onJump(s.abbr, s.section);
   };
 
+  const inputBar = (
+    <form onSubmit={ask} className="w-full">
+      <div className="flex gap-2">
+        <Input value={input} onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask anything about California law…"
+          className="h-12 rounded-2xl text-[15px] shadow-sm bg-card px-4" />
+        <Button type="submit" size="icon" className="h-12 w-12 rounded-2xl shrink-0" disabled={!!status}><ArrowUp /></Button>
+      </div>
+      <div className="flex items-center gap-2 mt-3 justify-between">
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+          <Switch checked={deep} onCheckedChange={toggleDeep} />
+          <span className="inline-flex items-center gap-1"><Zap className="h-3 w-3" /> Deep research</span>
+        </label>
+        <span className="text-[11px] text-muted-foreground hidden sm:block">Answers cite their sources - click any marker.</span>
+      </div>
+    </form>
+  );
+
+  if (messages.length === 0) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center px-4 -mt-10">
+        <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-center">
+          California law, <span className="brand-color">answered.</span>
+        </h1>
+        <p className="text-muted-foreground text-sm mt-3 mb-8 text-center">
+          162,324 sections across 30 codes - statutes, precedential case law, legislative history
+        </p>
+        <div className="w-full max-w-2xl">{inputBar}</div>
+        <div className="flex flex-wrap justify-center gap-2 mt-6 max-w-2xl">
+          {EXAMPLES.slice(0, 4).map((ex, i) => (
+            <motion.button key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + i * 0.05 }} onClick={() => askText(ex.q)}
+              className="text-[13px] px-3.5 py-1.5 rounded-full border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
+              {ex.label}
+            </motion.button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto px-4 pt-6" ref={scrollBox}>
         <div className="max-w-3xl mx-auto flex flex-col gap-5">
-          {messages.length === 0 && (
-            <div className="pt-6 sm:pt-12 pb-4">
-              <div className="relative overflow-hidden rounded-3xl px-6 py-14 sm:py-20 text-center empty-hero">
-                <div className="absolute inset-0 bg-grid" />
-                <div className="relative">
-                  <div className="inline-flex items-center justify-center h-10 w-10 rounded-xl border bg-card mb-5">
-                    <Scale className="h-5 w-5 brand-color" />
-                  </div>
-                  <h1 className="text-3xl sm:text-[2.75rem] font-semibold tracking-tight leading-tight">
-                    California law, <span className="brand-color">answered.</span>
-                  </h1>
-                  <p className="text-muted-foreground text-[15px] mt-4 max-w-md mx-auto leading-7">
-                    The complete California Codes (162,324 sections) plus retrieved judicial opinions,
-                    reasoned through and cited. Ask anything, or start here:
-                  </p>
-                </div>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-3 mt-6 text-left">
-                {EXAMPLES.map((ex, i) => (
-                  <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 + i * 0.06, duration: 0.35, ease: "easeOut" }}>
-                    <Card className="p-4 cursor-pointer card-lift bg-transparent" onClick={() => askText(ex)}>
-                      <div className="text-sm">{ex}</div>
-                      <div className="text-xs text-muted-foreground mt-1">{
-                        ["Criminal law", "Civil procedure", "Tenant rights", "Employment", "Criminal defense", "Privacy"][i]
-                      }</div>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          )}
           {messages.map((m, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: "easeOut" }}
               className={`flex gap-3 ${m.role === "user" ? "justify-end" : ""}`}>
@@ -299,21 +308,7 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
         </div>
       </div>
       <div className="p-4 pb-6 border-t bg-background">
-        <form onSubmit={ask} className="max-w-3xl mx-auto">
-          <div className="flex gap-2">
-            <Input value={input} onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask anything about California law…"
-              className="h-11 rounded-xl text-[15px]" />
-            <Button type="submit" size="icon" className="h-11 w-11 rounded-xl shrink-0" disabled={!!status}><ArrowUp /></Button>
-          </div>
-          <div className="flex items-center gap-2 mt-2 justify-between">
-            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-              <Switch checked={deep} onCheckedChange={toggleDeep} />
-              <span className="inline-flex items-center gap-1"><Zap className="h-3 w-3" /> Deep research</span>
-            </label>
-            <span className="text-[11px] text-muted-foreground">Answers cite their sources - click any [marker] or authority chip.</span>
-          </div>
-        </form>
+        <div className="max-w-3xl mx-auto">{inputBar}</div>
       </div>
     </div>
   );
