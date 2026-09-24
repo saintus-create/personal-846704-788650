@@ -281,7 +281,14 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
                       </div>
                     )}
                     <Html content={withCites(miniMd(m.content || ""))} className={AI_MD_CLASSES + (m.error ? " text-destructive whitespace-pre-wrap" : "")} onCite={handleCite(m)} />
-                    {m.streaming && <span className="inline-block w-2 h-4 bg-foreground/60 animate-pulse ml-0.5 align-middle rounded-sm" />}
+                    {m.streaming && (!m.content || m.content.replace(/\s/g, "").length < 40) && (
+                      <div className="space-y-2.5 py-1.5 w-96 max-w-full">
+                        <div className="shimmer-line w-11/12" />
+                        <div className="shimmer-line w-full" />
+                        <div className="shimmer-line w-4/5" />
+                      </div>
+                    )}
+                    {m.streaming && m.content && m.content.replace(/\s/g, "").length >= 40 && <span className="inline-block w-2 h-4 bg-foreground/60 animate-pulse ml-0.5 align-middle rounded-sm" />}
                   </>
                 )}
                 {m.role === "ai" && !m.streaming && !m.error && (
@@ -332,7 +339,9 @@ export default function Chat({ activeChat, onUpdateChat, onNewChat, onJump, onCo
                 <div key={i} className="flex items-center gap-2 text-[13px] text-muted-foreground">
                   {st.done ? <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-400 shrink-0" />
                            : <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />}
-                  <span>{st.label}{st.detail ? <span className="opacity-70"> — {st.detail}</span> : null}</span>
+                  {st.done
+                    ? <span>{st.label}{st.detail ? <span className="opacity-70"> — {st.detail}</span> : null}</span>
+                    : <span className="text-shimmer">{st.label}{st.detail ? " — " + st.detail : ""}</span>}
                 </div>
               ))}
             </motion.div>
