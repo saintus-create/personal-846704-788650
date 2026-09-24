@@ -110,7 +110,7 @@ export default function App() {
 
   return (
     <div className="h-screen p-1.5 sm:p-2.5 bg-background">
-      <div className="h-full rounded-xl border overflow-hidden flex flex-col bg-background">
+      <div className="h-full rounded-xl border shadow-sm overflow-hidden flex flex-col bg-background">
         <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75 z-40">
           <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 h-14">
             <div className="flex items-center gap-2 font-bold cursor-pointer select-none shrink-0" onClick={() => setTab("ai")}>
