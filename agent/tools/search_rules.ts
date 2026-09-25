@@ -1,7 +1,7 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { loadJsonl } from "../lib/corpus.js";
-import { ruleNumsIn, termsOf } from "../lib/search.js";
+import { loadJsonl } from "../lib/corpus";
+import { ruleNumsIn, termsOf } from "../lib/search";
 
 export default defineTool({
   description:

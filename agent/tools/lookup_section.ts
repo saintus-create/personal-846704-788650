@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { CODE_NAMES, loadCode } from "../lib/corpus.js";
+import { CODE_NAMES, loadCode } from "../lib/corpus";
 
 export default defineTool({
   description:
