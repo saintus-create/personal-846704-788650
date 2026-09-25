@@ -106,20 +106,18 @@ export function ChatSidebar({
             </Button>
           ) : null}
         </div>
-        <button
-          className={cn(
-            "flex h-8 items-center gap-2 rounded-md px-2 text-left text-sm transition-colors",
-            newSessionActive ? activeRowClass : inactiveRowClass,
-          )}
+        <Button
+          className="h-8 w-full justify-start px-2 text-left text-sm"
           onClick={() => {
             onNewChat();
             onNavigate?.(null);
           }}
           type="button"
+          variant="glassSolid"
         >
           <PlusIcon className="size-4" />
           New session
-        </button>
+        </Button>
       </div>
 
       <div className="flex flex-col gap-0.5 px-2 pb-2">
