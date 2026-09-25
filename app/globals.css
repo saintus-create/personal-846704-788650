@@ -1,9 +1,18 @@
 @import "tailwindcss";
-@source "../node_modules/streamdown/dist/*.js";
+@import "tw-animate-css";
 
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -22,50 +31,54 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: "Inter", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono:
-    "Geist Mono", "Geist Mono Fallback", ui-monospace, "SFMono-Regular", "Menlo", "Monaco",
-    "Consolas", monospace;
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
-:root,
-.light {
-  color-scheme: light;
-  /* Soft neutral page with white elevated surfaces so cards/composer pop. */
-  --background: oklch(0.971 0 0);
-  --foreground: oklch(0.16 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.16 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.16 0 0);
-  --primary: oklch(0.35 0.11 262);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.94 0 0);
-  --secondary-foreground: oklch(0.19 0 0);
-  --muted: oklch(0.94 0 0);
-  --muted-foreground: oklch(0.6 0 0);
-  --accent: oklch(0.94 0 0);
-  --accent-foreground: oklch(0.19 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.916 0 0);
-  --input: oklch(0.916 0 0);
-  --ring: oklch(0.708 0 0);
+:root {
   --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
 .dark {
-  color-scheme: dark;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.75 0.12 262);
+  --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -77,214 +90,94 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
 }
 
-* {
-  border-color: var(--border);
-}
-
-html {
-  height: 100%;
-}
-
-body {
-  min-height: 100%;
-  margin: 0;
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), var(--font-sans);
-}
-
-code,
-kbd,
-pre,
-samp {
-  font-family: var(--font-geist-mono), var(--font-mono);
-}
-
-button,
-input,
-textarea {
-  font-family: inherit;
-}
-
-button:not(:disabled),
-[role="button"]:not([aria-disabled="true"]) {
-  cursor: pointer;
-}
-
-button:disabled,
-[role="button"][aria-disabled="true"] {
-  cursor: not-allowed;
-}
-
-html[data-eve-chat-sidebar="closed"] [data-desktop-sidebar] {
-  width: 0;
-}
-
-.shimmer-text {
-  background: linear-gradient(
-    90deg,
-    var(--muted-foreground) 0%,
-    var(--foreground) 45%,
-    var(--muted-foreground) 90%
-  );
-  background-size: 220% 100%;
-  background-clip: text;
-  color: transparent;
-  animation: shimmer-text 1.8s linear infinite;
-  will-change: background-position;
-}
-
-@keyframes shimmer-text {
-  from {
-    background-position: 120% 0;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
   }
 
-  to {
-    background-position: -120% 0;
+  html,
+  body {
+    height: 100%;
   }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  .shimmer-text {
-    animation: none;
+  html {
+    @apply overscroll-none scroll-smooth;
   }
-}
 
-/* ---- Glass UI (glass-ui.crenspire.com) tokens + utilities ---- */
-:root {
-  --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.12) 25%, rgba(240, 248, 255, 0.13) 50%, rgba(255, 255, 255, 0.11) 75%, rgba(230, 240, 255, 0.12) 100%);
-  --glass-border: rgba(255, 255, 255, 0.12);
-  --glass-border-top: rgba(255, 255, 255, 0.35);
-  --glass-border-bottom: rgba(15, 23, 42, 0.08);
-  --glass-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.08),
-    0 1px 4px rgba(0, 0, 0, 0.04),
-    0 0 0 0.5px rgba(255, 255, 255, 0.08) inset,
-    0 0 12px rgba(255, 255, 255, 0.1) inset;
-  --glass-shadow-lg:
-    0 8px 32px rgba(0, 0, 0, 0.1),
-    0 2px 8px rgba(0, 0, 0, 0.06),
-    0 0 0 0.5px rgba(255, 255, 255, 0.1) inset,
-    0 0 20px rgba(255, 255, 255, 0.12) inset;
-  --glass-shadow-sm:
-    0 2px 8px rgba(0, 0, 0, 0.06),
-    0 1px 2px rgba(0, 0, 0, 0.03),
-    0 0 0 0.5px rgba(255, 255, 255, 0.06) inset,
-    0 0 8px rgba(255, 255, 255, 0.08) inset;
-  --blur: 10px;
-  --blur-sm: 10px;
-  --blur-lg: 10px;
-  --glass-frosted-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.22) 25%, rgba(240, 248, 255, 0.23) 50%, rgba(255, 255, 255, 0.21) 75%, rgba(230, 240, 255, 0.22) 100%);
-  --glass-frosted-border: rgba(255, 255, 255, 0.3);
-  --glass-frosted-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.08),
-    0 0 0 0.5px rgba(255, 255, 255, 0.15) inset,
-    0 0 20px rgba(255, 255, 255, 0.18) inset;
-  --blur-frosted: 25px;
-  --glass-fluted-pattern: repeating-linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.08) 0px,
-    rgba(255, 255, 255, 0.15) 4px,
-    rgba(255, 255, 255, 0.08) 8px,
-    rgba(255, 255, 255, 0.02) 10px,
-    rgba(255, 255, 255, 0.08) 12px
-  );
-  --glass-crystal-bg: rgba(255, 255, 255, 0.3);
-  --glass-crystal-border: rgba(255, 255, 255, 0.3);
-  --glass-crystal-shadow:
-    0 0 20px rgba(0, 0, 0, 0.2),
-    0 0 30px rgba(255, 255, 255, 0.1);
-  --glass-crystal-shadow-hover:
-    0 0 25px rgba(0, 0, 0, 0.3),
-    0 0 35px rgba(255, 255, 255, 0.15);
-  --blur-crystal: 2px;
-}
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+  }
 
-.dark {
-  --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.06) 25%, rgba(240, 248, 255, 0.07) 50%, rgba(255, 255, 255, 0.05) 75%, rgba(230, 240, 255, 0.06) 100%);
-  --glass-border: rgba(255, 255, 255, 0.15);
-  --glass-border-top: rgba(255, 255, 255, 0.25);
-  --glass-border-bottom: rgba(0, 0, 0, 0.3);
-  --glass-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.3),
-    0 1px 4px rgba(0, 0, 0, 0.15),
-    0 0 0 0.5px rgba(255, 255, 255, 0.12) inset,
-    0 0 12px rgba(255, 255, 255, 0.15) inset;
-  --glass-shadow-lg:
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    0 2px 8px rgba(0, 0, 0, 0.2),
-    0 0 0 0.5px rgba(255, 255, 255, 0.15) inset,
-    0 0 20px rgba(255, 255, 255, 0.18) inset;
-  --glass-shadow-sm:
-    0 2px 8px rgba(0, 0, 0, 0.25),
-    0 1px 2px rgba(0, 0, 0, 0.12),
-    0 0 0 0.5px rgba(255, 255, 255, 0.1) inset,
-    0 0 8px rgba(255, 255, 255, 0.12) inset;
-  --glass-frosted-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.12) 25%, rgba(240, 248, 255, 0.13) 50%, rgba(255, 255, 255, 0.11) 75%, rgba(230, 240, 255, 0.12) 100%);
-  --glass-frosted-border: rgba(255, 255, 255, 0.25);
-  --glass-frosted-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    0 2px 8px rgba(0, 0, 0, 0.3),
-    0 0 0 0.5px rgba(255, 255, 255, 0.2) inset,
-    0 0 20px rgba(255, 255, 255, 0.22) inset;
-  --glass-fluted-pattern: repeating-linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.05) 0px,
-    rgba(255, 255, 255, 0.12) 4px,
-    rgba(255, 255, 255, 0.05) 8px,
-    rgba(255, 255, 255, 0.01) 10px,
-    rgba(255, 255, 255, 0.05) 12px
-  );
-  --glass-crystal-bg: rgba(255, 255, 255, 0.1);
-  --glass-crystal-border: rgba(255, 255, 255, 0.3);
-  --glass-crystal-shadow:
-    0 0 20px rgba(0, 0, 0, 0.4),
-    0 0 30px rgba(255, 255, 255, 0.15);
-  --glass-crystal-shadow-hover:
-    0 0 25px rgba(0, 0, 0, 0.5),
-    0 0 35px rgba(255, 255, 255, 0.2);
-}
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
 
-@layer utilities {
-  .glass-bg {
-    background-image: var(--glass-bg);
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: transparent transparent;
+    }
+
+    *:hover {
+      scrollbar-color: color-mix(
+          in srgb,
+          var(--muted-foreground) 35%,
+          transparent
+        )
+        transparent;
+    }
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
     background-color: transparent;
-    backdrop-filter: blur(var(--blur)) saturate(180%);
-    -webkit-backdrop-filter: blur(var(--blur)) saturate(180%);
-    border-top: 0.5px solid var(--glass-border-top);
-    border-left: 0.5px solid var(--glass-border-top);
-    border-right: 0.5px solid var(--glass-border-bottom);
-    border-bottom: 0.5px solid var(--glass-border-bottom);
-    box-shadow: var(--glass-shadow);
+    border-radius: 9999px;
   }
-  .glass-frosted {
-    background-image: var(--glass-frosted-bg) !important;
-    background-color: transparent !important;
-    backdrop-filter: blur(var(--blur-frosted)) saturate(200%) !important;
-    -webkit-backdrop-filter: blur(var(--blur-frosted)) saturate(200%) !important;
-    border: 0.5px solid var(--glass-frosted-border) !important;
-    box-shadow: var(--glass-frosted-shadow) !important;
+
+  *:hover::-webkit-scrollbar-thumb {
+    background-color: color-mix(
+      in srgb,
+      var(--muted-foreground) 30%,
+      transparent
+    );
   }
-  .glass-fluted {
-    background-image: var(--glass-fluted-pattern), var(--glass-bg) !important;
-    background-color: transparent !important;
-    backdrop-filter: blur(var(--blur)) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(var(--blur)) saturate(180%) !important;
-    border: 0.5px solid var(--glass-border) !important;
-    box-shadow: var(--glass-shadow) !important;
+
+  *::-webkit-scrollbar-thumb:hover,
+  *::-webkit-scrollbar-thumb:active {
+    background-color: color-mix(
+      in srgb,
+      var(--muted-foreground) 50%,
+      transparent
+    );
   }
-  .glass-crystal {
-    position: relative;
-    background-color: var(--glass-crystal-bg) !important;
-    backdrop-filter: blur(var(--blur-crystal)) !important;
-    -webkit-backdrop-filter: blur(var(--blur-crystal)) !important;
-    border: 1px solid var(--glass-crystal-border) !important;
-    box-shadow: var(--glass-crystal-shadow) !important;
-    transition: all 0.3s ease !important;
-    background-image: linear-gradient(to bottom right, rgba(255, 255, 255, 0.15), transparent 50%) !important;
-    background-size: 200% 200% !important;
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
   }
+}
+
+:focus-visible {
+  box-shadow: none;
 }
