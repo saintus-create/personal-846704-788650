@@ -280,3 +280,29 @@
   max-width: 100%;
   line-height: 1.45;
 }
+
+/* visible research steps */
+.law-tool-step {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.8rem;
+  color: var(--muted-foreground, #8f8f8f);
+}
+
+.law-tool-step[data-running="true"] {
+  color: var(--foreground, #ddd);
+}
+
+.law-tool-step-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.law-tool-step-detail {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  opacity: 0.75;
+}

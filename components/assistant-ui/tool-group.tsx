@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useState,
+  useEffect,
   type ComponentPropsWithoutRef,
   type FC,
   type ReactNode,
@@ -19,15 +20,21 @@ const ToolGroupOpenContext = createContext<{
 export type ToolGroupRootProps = ComponentPropsWithoutRef<"div"> & {
   children: ReactNode;
   variant?: "default" | "ghost";
+  /** auto-expand while tools are running so the research steps stay visible */
+  active?: boolean;
 };
 
 export const ToolGroupRoot: FC<ToolGroupRootProps> = ({
   className,
   variant = "default",
+  active = false,
   children,
   ...props
 }) => {
   const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (active) setOpen(true);
+  }, [active]);
   return (
     <ToolGroupOpenContext.Provider value={{ open, setOpen }}>
       <div

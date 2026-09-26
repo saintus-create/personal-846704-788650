@@ -10,6 +10,7 @@ import { LawMarkdownText } from "@/components/assistant-ui/law-markdown";
 import { DotMatrix } from "@/components/assistant-ui/dot-matrix";
 import { MessageTiming } from "@/components/assistant-ui/message-timing";
 import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
+import { LawToolCall } from "@/components/assistant-ui/law-tool-call";
 import {
   ToolGroupContent,
   ToolGroupRoot,
@@ -639,7 +640,7 @@ const AssistantMessage: FC = () => {
                 return <div data-slot="aui_chain-of-thought">{children}</div>;
               case "group-tool":
                 return (
-                  <ToolGroupRoot variant="ghost">
+                  <ToolGroupRoot variant="ghost" active={part.status.type === "running"}>
                     <ToolGroupTrigger
                       count={part.indices.length}
                       active={part.status.type === "running"}
@@ -663,7 +664,7 @@ const AssistantMessage: FC = () => {
               case "reasoning":
                 return <Reasoning {...part} />;
               case "tool-call":
-                return part.toolUI ?? <ToolFallback {...part} />;
+                return part.toolUI ?? <LawToolCall {...part} />;
               case "indicator":
                 return <AssistantWorkingIndicator />;
               case "data":
