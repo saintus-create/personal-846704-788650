@@ -216,19 +216,22 @@ const Header: FC<{
   sidebarCollapsed: boolean;
   onToggleSidebar: () => void;
 }> = ({ sidebarCollapsed, onToggleSidebar }) => {
+  const isEmpty = useAuiState(isNewChatView);
   return (
     <header className="flex h-12 shrink-0 items-center gap-2 px-4">
-      <MobileSidebar />
-      <TooltipIconButton
-        variant="ghost"
-        size="icon"
-        tooltip={sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
-        side="bottom"
-        onClick={onToggleSidebar}
-        className="hidden size-8 md:flex"
-      >
-        <PanelLeftIcon className="size-4" />
-      </TooltipIconButton>
+      {isEmpty ? null : <MobileSidebar />}
+      {isEmpty ? null : (
+        <TooltipIconButton
+          variant="ghost"
+          size="icon"
+          tooltip={sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+          side="bottom"
+          onClick={onToggleSidebar}
+          className="hidden size-8 md:flex"
+        >
+          <PanelLeftIcon className="size-4" />
+        </TooltipIconButton>
+      )}
       <ThreadTitle />
       <TooltipIconButton
         variant="ghost"
@@ -843,13 +846,18 @@ const BranchPicker: FC<BranchPickerPrimitive.Root.Props> = ({
   );
 };
 
+const EmptyAwareSidebar: FC<{ collapsed?: boolean }> = ({ collapsed }) => {
+  const isEmpty = useAuiState(isNewChatView);
+  return isEmpty ? null : <Sidebar collapsed={collapsed} />;
+};
+
 export const Base: FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <div className="bg-[color-mix(in_oklab,var(--color-primary)_4%,var(--color-muted))] flex h-full w-full">
       <div className="hidden md:block">
-        <Sidebar collapsed={sidebarCollapsed} />
+        <EmptyAwareSidebar collapsed={sidebarCollapsed} />
       </div>
       <div className="flex flex-1 flex-col overflow-hidden p-2 md:pl-0">
         <div className="bg-background flex flex-1 flex-col overflow-hidden rounded-lg">
