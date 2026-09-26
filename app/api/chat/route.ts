@@ -1,5 +1,7 @@
 import {
   convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
   stepCountIs,
   streamText,
   tool,
@@ -269,10 +271,12 @@ export async function POST(req: Request) {
     }),
   );
 
-  return new Response(sourceStream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache, no-transform",
+  const uiStream = createUIMessageStream({
+    execute: ({ writer }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      writer.merge(sourceStream as any);
     },
   });
+
+  return createUIMessageStreamResponse({ stream: uiStream });
 }
