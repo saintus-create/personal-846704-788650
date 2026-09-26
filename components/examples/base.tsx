@@ -6,6 +6,8 @@ import {
   UserMessageAttachments,
 } from "@/components/assistant-ui/attachment";
 import { MarkdownText } from "@/components/assistant-ui/markdown-text";
+import { LawMarkdownText } from "@/components/assistant-ui/law-markdown";
+import { LawAuthorities } from "@/components/assistant-ui/law-authorities";
 import { DotMatrix } from "@/components/assistant-ui/dot-matrix";
 import { MessageTiming } from "@/components/assistant-ui/message-timing";
 import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
@@ -658,7 +660,7 @@ const AssistantMessage: FC = () => {
                 );
               }
               case "text":
-                return <MarkdownText />;
+                return <LawMarkdownText />;
               case "reasoning":
                 return <Reasoning {...part} />;
               case "tool-call":
@@ -673,6 +675,7 @@ const AssistantMessage: FC = () => {
           }}
         </MessagePrimitive.GroupedParts>
         <MessageError />
+        <LawAuthorities />
       </div>
 
       <div
