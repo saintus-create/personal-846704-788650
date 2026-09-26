@@ -51,7 +51,10 @@ export async function POST(req: Request) {
     system: SYSTEM_PROMPT,
     tools: TOOLS,
     stopWhen: stepCountIs(10),
-    messages: convertToModelMessages(messages),
+    onError: (error) => {
+      console.error("[api/chat]", error);
+    },
+    messages: await convertToModelMessages(messages),
   });
 
   return result.toUIMessageStreamResponse();
