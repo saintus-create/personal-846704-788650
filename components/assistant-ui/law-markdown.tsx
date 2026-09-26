@@ -119,13 +119,30 @@ const preprocess = (text: string): string => {
   return t;
 };
 
+const LawParagraph: FC<ComponentPropsWithoutRef<"p">> = ({ children, ...props }) => {
+  const text =
+    typeof children === "string"
+      ? children
+      : Array.isArray(children)
+        ? children.filter((c) => typeof c === "string").join("")
+        : "";
+  if (text === "Keep digging:" || text === "Authorities:") {
+    return (
+      <p {...props} className="law-section-label">
+        {children}
+      </p>
+    );
+  }
+  return <p {...props}>{children}</p>;
+};
+
 export function LawMarkdownText() {
   return (
     <MarkdownTextPrimitive
       remarkPlugins={[remarkGfm]}
       className="aui-md"
       preprocess={preprocess}
-      components={{ a: LawLink }}
+      components={{ a: LawLink, p: LawParagraph }}
     />
   );
 }

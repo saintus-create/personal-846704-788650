@@ -44,7 +44,7 @@ export type ResolvedBaseConfig = {
 
 export const defaultBaseConfig: ResolvedBaseConfig = {
   assistant: {
-    appName: "California Legislative Information",
+    appName: "LegInfo",
     labels: {
       newChat: "New chat",
       newThread: "New thread",

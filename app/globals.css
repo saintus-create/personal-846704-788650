@@ -265,3 +265,18 @@
   text-decoration: underline;
   text-underline-offset: 4;
 }
+
+/* section labels + pill wrapping fixes */
+.law-section-label {
+  margin-top: 0.9rem;
+  margin-bottom: 0.15rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground, #8f8f8f);
+}
+
+.law-followup-pill {
+  white-space: normal;
+  overflow: visible;
+  max-width: 100%;
+  line-height: 1.45;
+}
