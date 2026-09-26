@@ -209,6 +209,15 @@ export async function POST(req: Request) {
           acc += part.delta;
           const idx = acc.indexOf(AUTHORITIES_MARKER);
           if (idx >= 0) {
+            // flush everything up to the marker before suppressing
+            if (idx > forwarded) {
+              controller.enqueue({
+                type: "text-delta",
+                id: part.id,
+                delta: acc.slice(forwarded, idx),
+              });
+            }
+            forwarded = idx;
             suppressedAt = idx;
           } else {
             // forward everything except a tail that might become the marker
@@ -239,6 +248,14 @@ export async function POST(req: Request) {
           return;
         }
         if (part.type === "finish") {
+          // safety: flush any guarded tail that never got sent
+          if (suppressedAt < 0 && acc.length > forwarded) {
+            const tailId = "law-tail-flush";
+            controller.enqueue({ type: "text-start", id: tailId });
+            controller.enqueue({ type: "text-delta", id: tailId, delta: acc.slice(forwarded) });
+            controller.enqueue({ type: "text-end", id: tailId });
+            forwarded = acc.length;
+          }
           // deterministic AUTHORITIES from the real sources
           const citedText = suppressedAt >= 0 ? acc.slice(0, suppressedAt) : acc;
           const cited: string[] = [];
