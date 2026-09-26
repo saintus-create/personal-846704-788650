@@ -162,6 +162,14 @@ export async function POST(req: Request) {
     system,
     tools: TOOLS,
     stopWhen: stepCountIs(10),
+    // after enough research, stop letting the model call tools so it must answer
+    prepareStep: (() => {
+      let step = 0;
+      return () => {
+        step += 1;
+        return step >= 8 ? { toolChoice: "none" as const } : {};
+      };
+    })(),
     onError: (error) => {
       console.error("[api/chat]", error);
     },
