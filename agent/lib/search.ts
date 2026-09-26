@@ -29,6 +29,37 @@ function countTerm(hay: string, t: string): number {
 
 // words that only name a code (e.g. "family", "code", "penal") match cross-references
 // everywhere; they are noise once the search is narrowed to that code.
+const CODE_TO_ABBR: Record<string, string> = {
+  family: "FAM",
+  penal: "PEN",
+  civil: "CCP",
+  government: "GOV",
+  insurance: "INS",
+  education: "EDC",
+  evidence: "EVI",
+  welfare: "WIC",
+  business: "BPC",
+  professions: "BPC",
+  health: "HSC",
+  safety: "HSC",
+  revenue: "RTC",
+  taxation: "RTC",
+  vehicle: "VEH",
+  water: "WAT",
+  labor: "LAB",
+  elections: "ELC",
+  probate: "PRO",
+  corporations: "CORP",
+  financial: "FIN",
+  commercial: "COM",
+  food: "FAC",
+  agricultural: "FAC",
+  fish: "FGC",
+  game: "FGC",
+  utilities: "PUC",
+  resources: "PRC",
+};
+
 const CODE_NAME_WORDS = new Set(
   [
     "family code",
@@ -76,6 +107,21 @@ export function scoreSections(
     raw: q.toLowerCase(),
     terms: termsOf(q).filter((t) => !CODE_NAME_WORDS.has(t)),
   }));
+  // code names in the query imply a code priority
+  const implied = queries
+    .join(" ")
+    .toLowerCase()
+    .match(
+      /\b(family|penal|civil|government|insurance|education|evidence|welfare|business|professions|health|safety|revenue|taxation|vehicle|water|labor|elections|probate|streets|highways|public\s+contract|harbors|navigation|military|veterans|food|agricultural|corporations|financial|commercial|fish|game|resources|utilities)\s+code\b/g,
+    );
+  const impliedCodes = implied
+    ? [...new Set(implied.map((m) => CODE_TO_ABBR[m.replace(/\s+code$/, "").trim()] ?? "").filter(Boolean))]
+    : [];
+  const effectivePriority = codePriority?.length
+    ? codePriority
+    : impliedCodes.length
+      ? impliedCodes
+      : codePriority;
   const allTerms = [...new Set(qsets.flatMap((q) => q.terms))];
   const out: Array<{ abbr: string; r: Record<string, unknown>; score: number }> = [];
   for (const { abbr, r } of records) {
@@ -126,7 +172,7 @@ export function scoreSections(
         score += 6;
       }
       if (definesQueriedTerm) score += 30;
-      if (codePriority && codePriority.includes(abbr)) score += 25;
+      if (effectivePriority && effectivePriority.includes(abbr)) score += 25;
       if (r.repealed) score -= 8;
       out.push({ abbr, r, score });
     }
