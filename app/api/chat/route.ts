@@ -13,14 +13,16 @@ import searchBills from "@/agent/tools/search_bills";
 import searchRules from "@/agent/tools/search_rules";
 import searchCases from "@/agent/tools/search_cases";
 
-const KEY = process.env.SARVAM_API_KEY || "sk_2tvionrw_hfDAK3RK1XhF66Ix9NfM4kSQ";
+const KEY = process.env.SARVAM_API_KEY;
 
-const sarvam = createOpenAICompatible({
-  name: "sarvam",
-  baseURL: "https://api.sarvam.ai/v1",
-  apiKey: KEY,
-  headers: { "api-subscription-key": KEY },
-});
+const sarvam = KEY
+  ? createOpenAICompatible({
+      name: "sarvam",
+      baseURL: "https://api.sarvam.ai/v1",
+      apiKey: KEY,
+      headers: { "api-subscription-key": KEY },
+    })
+  : null;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const wrap = (definition: any) =>
@@ -41,6 +43,13 @@ const TOOLS = {
 export const maxDuration = 300;
 
 export async function POST(req: Request) {
+  if (!sarvam) {
+    return Response.json(
+      { error: "SARVAM_API_KEY is not configured." },
+      { status: 503 },
+    );
+  }
+
   const { messages } = await req.json();
 
   const result = streamText({
