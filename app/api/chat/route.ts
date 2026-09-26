@@ -1,7 +1,5 @@
 import {
   convertToModelMessages,
-  createUIMessageStream,
-  createUIMessageStreamResponse,
   stepCountIs,
   streamText,
   tool,
@@ -107,7 +105,6 @@ export async function POST(req: Request) {
   const { messages } = await req.json();
 
   let system = SYSTEM_PROMPT;
-  let preSources: PreSource[] = [];
   const question = lastUserQuestion(messages);
   if (question.length > 8) {
     try {
@@ -118,7 +115,6 @@ export async function POST(req: Request) {
           "Cite the ones you rely on with their exact bracketed markers like [1] or [2]. " +
           "You may still call tools to dig deeper or to check bills, rules, or case law.\n\n" +
           block;
-        preSources = sources;
       }
     } catch (e) {
       console.error("[api/chat] pre-retrieval failed:", e);
@@ -136,14 +132,5 @@ export async function POST(req: Request) {
     messages: await convertToModelMessages(messages),
   });
 
-  const stream = createUIMessageStream({
-    execute: ({ writer }) => {
-      if (preSources.length) {
-        writer.write({ type: "data-law-sources", data: { sources: preSources } });
-      }
-      writer.merge(result.toUIMessageStream());
-    },
-  });
-
-  return createUIMessageStreamResponse({ stream });
+  return result.toUIMessageStreamResponse();
 }
