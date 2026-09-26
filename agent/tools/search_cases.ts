@@ -17,7 +17,7 @@ export default defineTool({
       if (out.length >= 5 || tried >= 2) break;
       tried++;
       try {
-        const url = "https://api.courtlistener.com/v3/search/?q=" + encodeURIComponent(q) + "&court=cal+calctapp&type=o&stat_Precedential=on";
+        const url = "https://www.courtlistener.com/api/rest/v4/search/?q=" + encodeURIComponent(q) + "&court=cal+calctapp&type=o&stat_Precedential=on";
         const resp = await fetch(url, {
           headers: token ? { Authorization: "Token " + token } : {},
           signal: AbortSignal.timeout(9000),
