@@ -139,8 +139,8 @@ export async function POST(req: Request) {
       if (block) {
         system +=
           "\n\nStatute sources were pre-retrieved from the California Codes for this question, labeled [1], [2], etc. " +
-          "Cite the ones you rely on with their exact bracketed markers like [1] or [2]. " +
-          "You may still call tools to dig deeper or to check bills, rules, or case law.\n\n" +
+          "They are a starting point only: for any statutory question, also call search_statutes (and lookup_section for the governing sections) so you cite the most on-point provisions, then cite the sources you actually rely on with their exact bracketed markers. " +
+          "You may call tools to check bills, rules, or case law.\n\n" +
           block;
         for (const [k, v] of map) sourceMap.set(k, v);
       }
