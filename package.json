@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.78",
-    "@ai-sdk/react": "^4.0.0-beta.192",
+    "@ai-sdk/react": "^4.0.119",
     "@assistant-ui/core": "^0.3.21",
     "@assistant-ui/react": "^0.15.22",
     "@assistant-ui/react-ai-sdk": "^1.4.13",

@@ -29,6 +29,7 @@ export type ResolvedBaseConfig = {
     appName: string;
     labels: {
       newChat: string;
+      newThread: string;
       composerPlaceholder: string;
     };
     welcome: {
@@ -46,6 +47,7 @@ export const defaultBaseConfig: ResolvedBaseConfig = {
     appName: "California Legislative Information",
     labels: {
       newChat: "New chat",
+      newThread: "New thread",
       composerPlaceholder: "Ask anything about California law…",
     },
     welcome: {

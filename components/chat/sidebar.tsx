@@ -182,7 +182,6 @@ export function ChatSidebar({
                           event.preventDefault();
                           void onDeleteChat(chat.id);
                         }}
-                        variant="destructive"
                       >
                         <Trash2Icon className="size-4" />
                         Delete

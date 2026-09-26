@@ -22,11 +22,8 @@ const sarvam = createOpenAICompatible({
   headers: { "api-subscription-key": KEY },
 });
 
-const wrap = (definition: {
-  description: string;
-  inputSchema: never;
-  execute: (input: never) => Promise<unknown>;
-}) =>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const wrap = (definition: any) =>
   tool({
     description: definition.description,
     inputSchema: definition.inputSchema,
@@ -34,11 +31,11 @@ const wrap = (definition: {
   });
 
 const TOOLS = {
-  search_statutes: wrap(searchStatutes as never),
-  lookup_section: wrap(lookupSection as never),
-  search_bills: wrap(searchBills as never),
-  search_rules: wrap(searchRules as never),
-  search_cases: wrap(searchCases as never),
+  search_statutes: wrap(searchStatutes),
+  lookup_section: wrap(lookupSection),
+  search_bills: wrap(searchBills),
+  search_rules: wrap(searchRules),
+  search_cases: wrap(searchCases),
 };
 
 export const maxDuration = 300;
