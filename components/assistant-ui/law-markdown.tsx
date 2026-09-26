@@ -12,10 +12,11 @@ const AUTHORITY_HREF = "law-authority:";
 /** [1] [s2] [b3] [r1] [c4] — citation markers from corpus tools + pre-retrieval */
 const CITE_RE = /\[\s*([sbrcp]?\d{1,2})\s*\]/gi;
 
-const FOLLOWUP_RE = /(?:^|\n)[ \t]*FOLLOWUPS:[ \t]*\n([\s\S]*)$/i;
+const FOLLOWUP_RE =
+  /(?:^|\n)[ \t]*FOLLOWUPS:[ \t]*\n([\s\S]*?)(?=\n[ \t]*AUTHORITIES:|$)/i;
 
 const AUTHORITIES_RE =
-  /(?:^|\n)[ \t]*AUTHORITIES:[ \t]*\n([\s\S]*?)(?=\n[ \t]*FOLLOWUPS:|\s*$)/i;
+  /(?:^|\n)[ \t]*AUTHORITIES:[ \t]*\n([\s\S]*?)(?=\n[ \t]*FOLLOWUPS:|$)/i;
 
 type Aui = ReturnType<typeof useAui>;
 
