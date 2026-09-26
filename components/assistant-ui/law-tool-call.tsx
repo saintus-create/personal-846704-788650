@@ -18,8 +18,8 @@ function describe(toolName: string, args: any): string {
     case "search_statutes":
       return `Searching the California Codes — ${fmtQueries(args?.queries)}`;
     case "lookup_section":
-      return args?.abbr && args?.section
-        ? `Reading ${String(args.abbr).toUpperCase()} § ${args.section}`
+      return args?.code && args?.section
+        ? `Reading ${String(args.code).toUpperCase()} § ${args.section}`
         : "Reading statute section";
     case "search_bills":
       return `Searching 2025\u201326 legislation — ${fmtQueries(args?.queries)}`;
